@@ -1,0 +1,151 @@
+{
+  "name": "WF2 — UAE Amazon Market (14:00 GST = 10:00 UTC)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 10 * * *" }] }
+      },
+      "id": "w2-schedule",
+      "name": "⏰ 14:00 GST Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "uae_products",
+              "value": "=[{\"asin\":\"B000I1O7D8\",\"name\":\"Bonide Sulfur Fungicide\",\"type\":\"curative\",\"category\":\"disease\",\"price_usd\":12},{\"asin\":\"B07M983S9B\",\"name\":\"Organic Neem Oil Spray\",\"type\":\"curative\",\"category\":\"pest\",\"price_usd\":18},{\"asin\":\"B08B486YQK\",\"name\":\"Spider Farmer SF-2000 LED Grow Light\",\"type\":\"hardware\",\"category\":\"lighting\",\"price_usd\":189},{\"asin\":\"B07KBKXZL1\",\"name\":\"XLUX Soil Moisture Meter\",\"type\":\"hardware\",\"category\":\"monitoring\",\"price_usd\":12},{\"asin\":\"B08L73ZT3N\",\"name\":\"LEVOIT Humidifier for Plants\",\"type\":\"hardware\",\"category\":\"humidity\",\"price_usd\":79},{\"asin\":\"B07N1CLX3J\",\"name\":\"Self-Watering Planter Pot\",\"type\":\"hardware\",\"category\":\"watering\",\"price_usd\":29},{\"asin\":\"B01M9A5GHG\",\"name\":\"Miracle-Gro Tropical Plant Food\",\"type\":\"preventive\",\"category\":\"nutrition\",\"price_usd\":9},{\"asin\":\"B075F3Z82V\",\"name\":\"Premium Orchid Potting Mix\",\"type\":\"preventive\",\"category\":\"soil\",\"price_usd\":16},{\"asin\":\"B00MA1M78K\",\"name\":\"Perlite for Indoor Plants\",\"type\":\"preventive\",\"category\":\"soil\",\"price_usd\":14}]",
+              "type": "array"
+            },
+            {
+              "name": "uae_topics",
+              "value": "=[\"Best indoor plants for UAE apartments with extreme heat\",\"How to water plants in Dubai dry climate\",\"Orchid care guide for humid UAE summers\",\"Best grow lights for plants in UAE (no direct sunlight apartments)\",\"Spider mite crisis in Gulf region: complete elimination guide\",\"Top 10 low-maintenance plants for UAE beginners\",\"How to prevent root rot in UAE summer heat\",\"Best soil mix for tropical plants in the Gulf region\",\"Snake plant care in UAE: the ultimate survival guide\",\"Peace lily yellowing in Dubai: causes and fixes\",\"ZZ plant care in Abu Dhabi climate\",\"How to create humidity for tropical plants in desert climate\"]",
+              "type": "array"
+            },
+            {
+              "name": "selected_topic",
+              "value": "={{ $json.uae_topics[Math.floor(Math.random() * $json.uae_topics.length)] }}",
+              "type": "string"
+            },
+            {
+              "name": "selected_product",
+              "value": "={{ $json.uae_products[Math.floor(Math.random() * $json.uae_products.length)] }}",
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "id": "w2-topic-select",
+      "name": "🎯 Select UAE Topic & Product",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent",
+        "sendQuery": true,
+        "queryParameters": { "parameters": [{ "name": "key", "value": "REDACTED_API_KEY" }] },
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a top-performing affiliate content writer specializing in plant care for the UAE/Gulf market.\\n\\nTODAY'S ARTICLE TOPIC: {{ $json.selected_topic }}\\nFEATURED PRODUCT: {{ $json.selected_product.name }} (ASIN: {{ $json.selected_product.asin }}, ~${{ $json.selected_product.price_usd }})\\n\\nWrite a COMPLETE, SEO-optimized plant care article of EXACTLY 2500 words targeting UAE/Gulf English-speaking plant enthusiasts.\\n\\nARTICLE REQUIREMENTS:\\n- Title: Compelling 55-65 char headline mentioning UAE/Dubai/Gulf context\\n- Target audience: English-speaking expats and locals in UAE, Dubai, Abu Dhabi\\n- Climate context: Extreme heat (40-50°C summers), low humidity desert air, mostly indoor plants\\n- Structure:\\n  * Intro (200 words): Hook — specific UAE plant problem, humidity challenge\\n  * 5 H2 sections (350 words each): \\n    - Section 1: The UAE-specific challenge (why generic advice fails here)\\n    - Section 2: The solution (specific technique for Gulf climate)\\n    - Section 3: Product recommendation — naturally feature the FEATURED PRODUCT\\n    - Section 4: Step-by-step guide (numbered list)\\n    - Section 5: FAQ about this topic in UAE context\\n  * Conclusion (150 words): CTA to buy the featured product on Amazon UAE\\n- AFFILIATE LINKS FORMAT: Use [AMAZON_UAE: product name | ASIN] for affiliate placement\\n- CRITICAL: At least 2 Amazon UAE product mentions (amazon.ae not .com)\\n- Tone: Helpful, empathetic, understanding of Gulf climate challenges\\n- Language: Formal English suitable for international expat audience\\n\\nReturn ONLY valid JSON:\\n{\\\"title\\\": \\\"...\\\", \\\"slug\\\": \\\"url-slug\\\", \\\"meta_description\\\": \\\"155 chars\\\", \\\"focus_keyword\\\": \\\"keyword\\\", \\\"primary_asin\\\": \\\"{{ $json.selected_product.asin }}\\\", \\\"content\\\": \\\"<full HTML>\\\"}\"\n    }]\n  }],\n  \"generationConfig\": { \"temperature\": 0.7, \"maxOutputTokens\": 8192 },\n  \"thinkingConfig\": { \"thinkingBudget\": 512 }\n}"
+      },
+      "id": "w2-gemini",
+      "name": "🤖 Gemini 2.5 — UAE Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Gemini response + inject UAE Amazon affiliate links\nconst response = $input.item.json;\nconst selectedProduct = $('🎯 Select UAE Topic & Product').item.json.selected_product;\n\nlet text = response?.candidates?.[0]?.content?.parts?.[0]?.text || '';\ntext = text.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n\nlet article;\ntry {\n  article = JSON.parse(text);\n} catch(e) {\n  const match = text.match(/\\{[\\s\\S]*\\}/);\n  if (match) article = JSON.parse(match[0]);\n  else throw new Error('Parse failed: ' + text.slice(0, 200));\n}\n\n// UAE Amazon affiliate tag\nconst UAE_TAG = 'plantsmag-ae-21';\nconst UAE_BASE = 'https://www.amazon.ae/dp/';\nconst COM_BASE = 'https://www.amazon.com/dp/';\n\n// Replace [AMAZON_UAE: name | ASIN] placeholders\nlet content = article.content;\ncontent = content.replace(/\\[AMAZON_UAE:\\s*([^|]+)\\|\\s*([A-Z0-9]+)\\]/gi, (match, name, asin) => {\n  const uaeUrl = `${UAE_BASE}${asin.trim()}?tag=${UAE_TAG}`;\n  const comUrl = `${COM_BASE}${asin.trim()}?tag=plantsmag-20`;\n  return `<div class=\"pm-affiliate-box\" style=\"background:linear-gradient(135deg,#fffbeb,#fef3c7);border-left:4px solid #d97706;padding:20px;margin:30px 0;border-radius:8px;\">\n  <p style=\"margin:0;\"><strong>🛒 ${name.trim()}</strong></p>\n  <p style=\"margin:8px 0;\"><a href=\"${uaeUrl}\" target=\"_blank\" rel=\"nofollow noopener\" style=\"background:#febd69;color:#111;padding:10px 20px;text-decoration:none;border-radius:5px;font-weight:bold;display:inline-block;margin-right:10px;\">Buy on Amazon UAE 🇦🇪 →</a>\n  <a href=\"${comUrl}\" target=\"_blank\" rel=\"nofollow noopener\" style=\"color:#0066c0;font-weight:bold;\">Also on Amazon US →</a></p>\n</div>`;\n});\n\n// Add featured product CTA at end\nconst featuredUrl = `${UAE_BASE}${selectedProduct.asin}?tag=${UAE_TAG}`;\ncontent += `\n<div style=\"background:linear-gradient(135deg,#fff7ed,#ffedd5);border:2px solid #ea580c;padding:25px;margin:40px 0;border-radius:10px;text-align:center;\">\n  <h3 style=\"color:#9a3412;margin-top:0;\">🌿 Our #1 Recommendation for UAE Plant Parents</h3>\n  <p><strong>${selectedProduct.name}</strong> — the most effective solution for the challenges discussed in this article.</p>\n  <a href=\"${featuredUrl}\" target=\"_blank\" rel=\"nofollow noopener\" style=\"background:#ea580c;color:white;padding:14px 30px;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;display:inline-block;\">Check Price on Amazon UAE 🇦🇪</a>\n</div>`;\n\nreturn {\n  title: article.title,\n  slug: article.slug || article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60),\n  meta_description: article.meta_description || '',\n  focus_keyword: article.focus_keyword || '',\n  primary_asin: article.primary_asin || selectedProduct.asin,\n  content: content,\n  market: 'UAE'\n};"
+      },
+      "id": "w2-process",
+      "name": "⚙️ Process UAE Affiliates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://image.pollinations.ai/prompt/{{ encodeURIComponent('Beautiful indoor plant in modern UAE apartment, desert oasis, minimalist interior design, luxury Dubai home, professional photography, natural light') }}?width=1200&height=630&model=flux&nologo=true",
+        "options": { "timeout": 30000, "response": { "response": { "responseFormat": "file" } } }
+      },
+      "id": "w2-image",
+      "name": "🖼️ UAE Lifestyle Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://plantsmag.com/wp-json/wp/v2/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Disposition", "value": "=attachment; filename=\"uae-{{ $('⚙️ Process UAE Affiliates').item.json.slug }}.jpg\"" },
+            { "name": "Content-Type", "value": "image/jpeg" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "w2-upload-img",
+      "name": "📤 Upload Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 400],
+      "credentials": { "httpBasicAuth": { "id": "wp-plantsmag-auth", "name": "PlantsMag WP Auth" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"title\": \"{{ $('⚙️ Process UAE Affiliates').item.json.title }}\",\n  \"content\": \"{{ $('⚙️ Process UAE Affiliates').item.json.content }}\",\n  \"excerpt\": \"{{ $('⚙️ Process UAE Affiliates').item.json.meta_description }}\",\n  \"slug\": \"{{ $('⚙️ Process UAE Affiliates').item.json.slug }}\",\n  \"status\": \"publish\",\n  \"categories\": [1],\n  \"featured_media\": {{ $json.id || 0 }}\n}",
+        "options": {}
+      },
+      "id": "w2-publish",
+      "name": "📰 Publish UAE Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1460, 300],
+      "credentials": { "httpBasicAuth": { "id": "wp-plantsmag-auth", "name": "PlantsMag WP Auth" } }
+    },
+    {
+      "parameters": { "url": "https://plantsmag.com/fast_index.php", "options": { "timeout": 30000 } },
+      "id": "w2-index",
+      "name": "⚡ Fast Index",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1720, 300]
+    }
+  ],
+  "connections": {
+    "⏰ 14:00 GST Daily": { "main": [[{ "node": "🎯 Select UAE Topic & Product", "type": "main", "index": 0 }]] },
+    "🎯 Select UAE Topic & Product": { "main": [[{ "node": "🤖 Gemini 2.5 — UAE Article", "type": "main", "index": 0 }]] },
+    "🤖 Gemini 2.5 — UAE Article": { "main": [[{ "node": "⚙️ Process UAE Affiliates", "type": "main", "index": 0 }]] },
+    "⚙️ Process UAE Affiliates": { "main": [[{ "node": "🖼️ UAE Lifestyle Image", "type": "main", "index": 0 }, { "node": "📰 Publish UAE Article", "type": "main", "index": 0 }]] },
+    "🖼️ UAE Lifestyle Image": { "main": [[{ "node": "📤 Upload Image", "type": "main", "index": 0 }]] },
+    "📤 Upload Image": { "main": [[{ "node": "📰 Publish UAE Article", "type": "main", "index": 0 }]] },
+    "📰 Publish UAE Article": { "main": [[{ "node": "⚡ Fast Index", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": ["plantsmag", "uae-market", "amazon-ae"],
+  "versionId": "wf2-v1"
+}

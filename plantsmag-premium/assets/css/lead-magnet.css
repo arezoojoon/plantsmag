@@ -1,0 +1,495 @@
+/* ═══════════════════════════════════════════════════════════
+   PlantsMag — Lead Magnet & Soft Gate System v1.0
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Blur Gate Overlay ──────────────────────────────────────── */
+.pm-treatment-locked {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+}
+.pm-treatment-locked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: linear-gradient(135deg,
+        rgba(255,255,255,0.15) 0%,
+        rgba(255,255,255,0.05) 100%);
+    border-radius: 16px;
+    z-index: 10;
+    transition: opacity 0.5s ease;
+}
+.pm-treatment-locked.unlocked::after {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ── Danger Level Gauge ─────────────────────────────────────── */
+.pm-danger-gauge {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin: 16px 0;
+}
+.pm-danger-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 10px;
+}
+.pm-danger-track {
+    height: 10px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    overflow: hidden;
+    position: relative;
+}
+.pm-danger-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+    position: relative;
+}
+.pm-danger-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: inherit;
+    box-shadow: 0 0 12px currentColor;
+}
+.pm-danger-fill.danger-low    { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.pm-danger-fill.danger-medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.pm-danger-fill.danger-high   { background: linear-gradient(90deg, #ef4444, #f97316); }
+.pm-danger-fill.danger-critical {
+    background: linear-gradient(90deg, #7c3aed, #ef4444);
+    animation: pulse-danger 1.2s ease-in-out infinite;
+}
+@keyframes pulse-danger {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+}
+.pm-danger-levels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+.pm-danger-levels span {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.35);
+    font-weight: 500;
+}
+.pm-danger-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-top: 12px;
+}
+.pm-danger-badge.badge-low      { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+.pm-danger-badge.badge-medium   { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+.pm-danger-badge.badge-high     { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+.pm-danger-badge.badge-critical { background: rgba(124,58,237,0.15); color: #a78bfa; border: 1px solid rgba(124,58,237,0.3); }
+
+/* ── Soft Gate Modal ────────────────────────────────────────── */
+.pm-softgate-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+.pm-softgate-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.pm-softgate-modal {
+    background: linear-gradient(145deg, #1a2e1a, #0f1f0f);
+    border: 1px solid rgba(42, 123, 76, 0.3);
+    border-radius: 24px;
+    padding: 36px 32px;
+    max-width: 480px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    transform: translateY(20px) scale(0.96);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.pm-softgate-overlay.active .pm-softgate-modal {
+    transform: translateY(0) scale(1);
+}
+
+/* Modal Header */
+.pm-sg-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, rgba(42,123,76,0.3), rgba(42,123,76,0.1));
+    border: 1px solid rgba(42,123,76,0.4);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+.pm-sg-headline {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.25;
+    margin-bottom: 8px;
+}
+.pm-sg-headline span {
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.pm-sg-subtext {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+/* What You Get bullets */
+.pm-sg-benefits {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.pm-sg-benefits li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.75);
+}
+.pm-sg-benefits li .sg-check {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background: rgba(34,197,94,0.15);
+    border: 1px solid rgba(34,197,94,0.35);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4ade80;
+    font-size: 11px;
+    margin-top: 1px;
+}
+
+/* Email Form */
+.pm-sg-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.pm-sg-input-wrap {
+    position: relative;
+}
+.pm-sg-input-wrap svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.3);
+    pointer-events: none;
+}
+.pm-sg-email-input {
+    width: 100%;
+    padding: 14px 16px 14px 44px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+.pm-sg-email-input:focus {
+    border-color: rgba(42,123,76,0.6);
+    background: rgba(255,255,255,0.09);
+}
+.pm-sg-email-input::placeholder { color: rgba(255,255,255,0.3); }
+
+.pm-sg-submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    letter-spacing: -0.01em;
+}
+.pm-sg-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(34,197,94,0.4);
+    background: linear-gradient(135deg, #15803d, #16a34a);
+}
+.pm-sg-submit-btn:active { transform: translateY(0); }
+.pm-sg-submit-btn.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+.pm-sg-submit-btn .btn-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: sg-spin 0.7s linear infinite;
+    display: none;
+}
+.pm-sg-submit-btn.loading .btn-spinner { display: block; }
+.pm-sg-submit-btn.loading .btn-text { display: none; }
+
+@keyframes sg-spin { to { transform: rotate(360deg); } }
+
+.pm-sg-skip {
+    text-align: center;
+    margin-top: 12px;
+}
+.pm-sg-skip a {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+    text-decoration: none;
+    transition: color 0.2s;
+    cursor: pointer;
+}
+.pm-sg-skip a:hover { color: rgba(255,255,255,0.6); }
+.pm-sg-privacy {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.25);
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* ── Affiliate Products Panel ───────────────────────────────── */
+.pm-affiliate-panel {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 16px;
+}
+.pm-affiliate-panel-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 14px;
+}
+.pm-product-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.pm-product-card:last-child { margin-bottom: 0; }
+.pm-product-card:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(42,123,76,0.3);
+    transform: translateX(4px);
+}
+.pm-product-icon {
+    font-size: 22px;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.pm-product-info { flex: 1; min-width: 0; }
+.pm-product-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.pm-product-price {
+    font-size: 0.78rem;
+    color: #4ade80;
+    font-weight: 600;
+    margin-top: 2px;
+}
+.pm-product-arrow {
+    color: rgba(255,255,255,0.3);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+.pm-product-card:hover .pm-product-arrow { transform: translateX(4px); }
+
+/* ── Share Buttons ──────────────────────────────────────────── */
+.pm-share-panel {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+.pm-share-btn {
+    flex: 1;
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.pm-share-btn:hover { transform: translateY(-2px); }
+.pm-share-whatsapp {
+    background: #25d366;
+    color: #fff;
+}
+.pm-share-whatsapp:hover { background: #20b858; box-shadow: 0 6px 20px rgba(37,211,102,0.4); }
+.pm-share-pinterest {
+    background: #e60023;
+    color: #fff;
+}
+.pm-share-pinterest:hover { background: #c4001d; box-shadow: 0 6px 20px rgba(230,0,35,0.4); }
+.pm-share-copy {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.pm-share-copy:hover { background: rgba(255,255,255,0.14); color: #fff; }
+.pm-share-label {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* ── Success State ──────────────────────────────────────────── */
+.pm-sg-success {
+    text-align: center;
+    padding: 20px 0 10px;
+    display: none;
+}
+.pm-sg-success.visible { display: block; }
+.pm-sg-success-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 16px;
+    animation: success-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes success-pop {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+.pm-sg-success h3 { color: #fff; margin-bottom: 8px; font-size: 1.15rem; }
+.pm-sg-success p  { color: rgba(255,255,255,0.5); font-size: 0.875rem; line-height: 1.5; }
+
+/* ── Watering ET Result Panel ───────────────────────────────── */
+.pm-et-breakdown {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.8;
+}
+.pm-et-breakdown strong { color: rgba(255,255,255,0.8); }
+.pm-et-formula {
+    font-family: 'Courier New', monospace;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-size: 0.8rem;
+    color: #4ade80;
+    display: block;
+}
+
+/* ── Weekly Plan Gate ───────────────────────────────────────── */
+.pm-weekly-gate {
+    border: 1px dashed rgba(42,123,76,0.4);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 16px;
+    text-align: center;
+    background: rgba(42,123,76,0.05);
+}
+.pm-weekly-gate h4 {
+    color: #4ade80;
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+.pm-weekly-gate p {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .pm-softgate-modal { padding: 28px 20px; border-radius: 20px; }
+    .pm-sg-headline { font-size: 1.25rem; }
+    .pm-share-panel { gap: 8px; }
+    .pm-share-btn { min-width: 100px; font-size: 0.78rem; padding: 10px 12px; }
+}

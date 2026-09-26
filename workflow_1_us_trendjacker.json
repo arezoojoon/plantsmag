@@ -1,0 +1,179 @@
+{
+  "name": "WF1 — US Trend Jacker (8AM EST)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 13 * * *" }] }
+      },
+      "id": "n1-schedule",
+      "name": "⏰ 8AM EST (13:00 UTC)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [180, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=plant+disease+houseplant+care&hl=en-US&gl=US&ceid=US:en",
+        "options": { "timeout": 15000 }
+      },
+      "id": "n2-google-news",
+      "name": "📰 Google News RSS (Plant)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [420, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/houseplants/hot.json?limit=10",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "User-Agent", "value": "PlantsMag Bot/1.0" }]
+        },
+        "options": { "timeout": 10000 }
+      },
+      "id": "n3-reddit",
+      "name": "🔴 Reddit r/houseplants",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [420, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Google News RSS + Reddit to find the best trending topic\nconst news = $('📰 Google News RSS (Plant)').item.json;\nconst reddit = $('🔴 Reddit r/houseplants').item.json;\n\n// Extract news titles from RSS XML\nconst rssBody = typeof news === 'string' ? news : JSON.stringify(news);\nconst newsTitles = [];\nconst titleMatches = rssBody.match(/<title><![CDATA[(.*?)]]><\\/title>/g) || \n                    rssBody.match(/<title>(.*?)<\\/title>/g) || [];\nfor (const m of titleMatches.slice(1, 6)) {\n  const title = m.replace(/<[^>]+>/g, '').replace(/<!\\/CDATA|CDATA\\[|]]>/g, '').trim();\n  if (title && title.length > 10) newsTitles.push(title);\n}\n\n// Extract Reddit top posts\nconst redditTopics = [];\ntry {\n  const posts = reddit.data?.children || [];\n  for (const p of posts.slice(0, 5)) {\n    const title = p.data?.title || '';\n    const score = p.data?.score || 0;\n    if (title && score > 50) redditTopics.push(`${title} (${score} upvotes)`);\n  }\n} catch(e) {}\n\n// Combine for Gemini context\nconst context = [\n  'TRENDING GOOGLE NEWS:', ...newsTitles.slice(0, 3),\n  'TRENDING REDDIT:', ...redditTopics.slice(0, 3)\n].join('\\n');\n\n// Fallback topics if no fresh trends found\nconst fallbacks = [\n  'Why Your Monstera Leaves Are Turning Yellow (And How to Fix It)',\n  'Spider Mites on Houseplants: The Complete Elimination Guide',\n  'Overwatering vs Underwatering: How to Tell the Difference',\n  'The Best Soil Mix for Tropical Plants in 2026',\n  'Root Rot: How to Save a Dying Plant in 7 Steps'\n];\n\nconst hasFreshTrends = newsTitles.length > 0 || redditTopics.length > 0;\n\nreturn {\n  trend_context: context || 'No fresh trends found today',\n  has_fresh_trends: hasFreshTrends,\n  fallback_topic: fallbacks[Math.floor(Math.random() * fallbacks.length)],\n  news_titles: newsTitles,\n  reddit_topics: redditTopics,\n  generated_at: new Date().toISOString()\n};"
+      },
+      "id": "n4-parse-trends",
+      "name": "🔍 Parse & Select Trend",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent",
+        "sendQuery": true,
+        "queryParameters": { "parameters": [{ "name": "key", "value": "REDACTED_API_KEY" }] },
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are a world-class plant care content strategist for PlantsMag.com, targeting US English-speaking plant enthusiasts in 2026.\\n\\nToday's trending plant topics:\\n{{ $json.trend_context }}\\n\\nFallback topic if trends are unclear: {{ $json.fallback_topic }}\\n\\nYour task: Write a COMPLETE, SEO-optimized plant care article of EXACTLY 2500 words.\\n\\nARTICLE REQUIREMENTS:\\n- Title: Compelling 50-60 char headline with power words (Warning, Secret, Proven, Expert, Fix)\\n- Must be based on today's trending topic OR the fallback topic\\n- Target keyword: a specific long-tail question US plant owners Google\\n- Structure:\\n  * H1: Power headline\\n  * Intro (180 words): Hook with a relatable problem, promise of solution\\n  * 5 H2 sections (350 words each): Actionable, specific, expert advice\\n  * Each H2 has 2-3 paragraphs with data, studies, or expert quotes\\n  * FAQ section (3 Q&As as H3 + answer) for rich snippets\\n  * Conclusion (120 words): Summary + CTA to use PlantsMag AI diagnosis tool\\n- Affiliate integration: Naturally mention 2-3 relevant Amazon products (moisture meters, neem oil, grow lights) with [PRODUCT: name] placeholder\\n- Image alt text placeholders: [IMG: description]\\n- Tone: Passionate plant expert, evidence-based, US English\\n\\nReturn ONLY valid JSON (no markdown):\\n{\\\"title\\\": \\\"...\\\", \\\"slug\\\": \\\"url-friendly-slug\\\", \\\"meta_description\\\": \\\"155 char compelling description\\\", \\\"focus_keyword\\\": \\\"exact keyword phrase\\\", \\\"content\\\": \\\"<full HTML with h2, h3, p, ul, li tags - no h1>\\\"}\"\n    }]\n  }],\n  \"generationConfig\": { \"temperature\": 0.75, \"maxOutputTokens\": 8192 },\n  \"thinkingConfig\": { \"thinkingBudget\": 1024 }\n}"
+      },
+      "id": "n5-gemini-write",
+      "name": "🤖 Gemini 2.5 — Write Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [940, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Gemini response + inject affiliate boxes + image placeholders\nconst response = $input.item.json;\nlet text = response?.candidates?.[0]?.content?.parts?.[0]?.text || '';\n\n// Clean markdown code blocks\ntext = text.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n\nlet article;\ntry {\n  article = JSON.parse(text);\n} catch(e) {\n  // Try to extract JSON from response\n  const match = text.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    article = JSON.parse(match[0]);\n  } else {\n    throw new Error('Could not parse Gemini response: ' + text.slice(0, 300));\n  }\n}\n\nif (!article.title || !article.content) {\n  throw new Error('Missing title or content in Gemini response');\n}\n\n// Affiliate product mapping (US Amazon - plantsmag-20 tag)\nconst affiliateMap = {\n  'moisture meter': 'https://www.amazon.com/s?k=soil+moisture+meter&tag=plantsmag-20',\n  'neem oil': 'https://www.amazon.com/s?k=neem+oil+spray+plants&tag=plantsmag-20',\n  'grow light': 'https://www.amazon.com/s?k=grow+lights+indoor+plants&tag=plantsmag-20',\n  'humidifier': 'https://www.amazon.com/s?k=humidifier+plants&tag=plantsmag-20',\n  'perlite': 'https://www.amazon.com/s?k=horticultural+perlite&tag=plantsmag-20',\n  'fungicide': 'https://www.amazon.com/s?k=fungicide+indoor+plants&tag=plantsmag-20',\n};\n\n// Replace [PRODUCT: name] placeholders with affiliate boxes\nlet content = article.content;\ncontent = content.replace(/\\[PRODUCT:\\s*([^\\]]+)\\]/gi, (match, productName) => {\n  const key = Object.keys(affiliateMap).find(k => productName.toLowerCase().includes(k));\n  const url = key ? affiliateMap[key] : 'https://www.amazon.com/s?k=' + encodeURIComponent(productName) + '&tag=plantsmag-20';\n  return `<div class=\"pm-affiliate-box\" style=\"background:linear-gradient(135deg,#f0fff4,#c6f6d5);border-left:4px solid #38a169;padding:20px;margin:30px 0;border-radius:8px;\"><p><strong>🛒 Recommended:</strong> <a href=\"${url}\" target=\"_blank\" rel=\"nofollow noopener\" style=\"color:#276749;font-weight:bold;\">${productName} — Check Best Price on Amazon →</a></p></div>`;\n});\n\n// Add diagnosis CTA at the end\ncontent += `\n<div style=\"background:linear-gradient(135deg,#ebf8ff,#bee3f8);border-left:4px solid #3182ce;padding:20px;margin:40px 0;border-radius:8px;\">\n  <h3 style=\"color:#2b6cb0;margin-top:0;\">🔬 Is Your Plant Sick? Get an Instant AI Diagnosis</h3>\n  <p>Not sure what's wrong with your plant? Use our <a href=\"https://plantsmag.com/plant-disease-finder/\" style=\"color:#2b6cb0;font-weight:bold;\">AI Plant Disease Finder</a> — upload a photo and get expert diagnosis in seconds.</p>\n</div>`;\n\nreturn {\n  title: article.title,\n  slug: article.slug || article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60),\n  meta_description: article.meta_description || '',\n  focus_keyword: article.focus_keyword || '',\n  content: content,\n  word_count: content.split(' ').length\n};"
+      },
+      "id": "n6-process-article",
+      "name": "⚙️ Process & Inject Affiliates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://image.pollinations.ai/prompt/{{ encodeURIComponent('Professional plant photography, ' + $json.focus_keyword + ', vibrant green, natural light, detailed macro, white background, 16:9 ratio') }}?width=1200&height=630&model=flux&nologo=true",
+        "options": { "timeout": 30000, "response": { "response": { "responseFormat": "file" } } }
+      },
+      "id": "n7-gen-image",
+      "name": "🖼️ Generate Cover Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1460, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://plantsmag.com/wp-json/wp/v2/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Disposition", "value": "=attachment; filename=\"{{ $('⚙️ Process & Inject Affiliates').item.json.slug }}.jpg\"" },
+            { "name": "Content-Type", "value": "image/jpeg" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": { "timeout": 30000 }
+      },
+      "id": "n8-upload-image",
+      "name": "📤 Upload Image to WP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1460, 400],
+      "credentials": { "httpBasicAuth": { "id": "wp-plantsmag-auth", "name": "PlantsMag WP Auth" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"title\": \"{{ $('⚙️ Process & Inject Affiliates').item.json.title }}\",\n  \"content\": \"{{ $('⚙️ Process & Inject Affiliates').item.json.content }}\",\n  \"excerpt\": \"{{ $('⚙️ Process & Inject Affiliates').item.json.meta_description }}\",\n  \"slug\": \"{{ $('⚙️ Process & Inject Affiliates').item.json.slug }}\",\n  \"status\": \"publish\",\n  \"categories\": [1],\n  \"featured_media\": {{ $json.id || 0 }},\n  \"meta\": { \"_focus_keyword\": \"{{ $('⚙️ Process & Inject Affiliates').item.json.focus_keyword }}\" }\n}",
+        "options": {}
+      },
+      "id": "n9-publish-wp",
+      "name": "📰 Publish to WordPress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1720, 300],
+      "credentials": { "httpBasicAuth": { "id": "wp-plantsmag-auth", "name": "PlantsMag WP Auth" } }
+    },
+    {
+      "parameters": {
+        "url": "https://plantsmag.com/fast_index.php",
+        "options": { "timeout": 30000 }
+      },
+      "id": "n10-fast-index",
+      "name": "⚡ IndexNow + Google Ping",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "result",
+              "value": "=✅ WF1 Published: {{ $('⚙️ Process & Inject Affiliates').item.json.title }} | Post ID: {{ $('📰 Publish to WordPress').item.json.id }} | Words: {{ $('⚙️ Process & Inject Affiliates').item.json.word_count }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "n11-log",
+      "name": "✅ Done",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2240, 300]
+    }
+  ],
+  "connections": {
+    "⏰ 8AM EST (13:00 UTC)": { "main": [[{ "node": "📰 Google News RSS (Plant)", "type": "main", "index": 0 }, { "node": "🔴 Reddit r/houseplants", "type": "main", "index": 0 }]] },
+    "📰 Google News RSS (Plant)": { "main": [[{ "node": "🔍 Parse & Select Trend", "type": "main", "index": 0 }]] },
+    "🔴 Reddit r/houseplants": { "main": [[{ "node": "🔍 Parse & Select Trend", "type": "main", "index": 0 }]] },
+    "🔍 Parse & Select Trend": { "main": [[{ "node": "🤖 Gemini 2.5 — Write Article", "type": "main", "index": 0 }]] },
+    "🤖 Gemini 2.5 — Write Article": { "main": [[{ "node": "⚙️ Process & Inject Affiliates", "type": "main", "index": 0 }]] },
+    "⚙️ Process & Inject Affiliates": { "main": [[{ "node": "🖼️ Generate Cover Image", "type": "main", "index": 0 }, { "node": "📰 Publish to WordPress", "type": "main", "index": 0 }]] },
+    "🖼️ Generate Cover Image": { "main": [[{ "node": "📤 Upload Image to WP", "type": "main", "index": 0 }]] },
+    "📤 Upload Image to WP": { "main": [[{ "node": "📰 Publish to WordPress", "type": "main", "index": 0 }]] },
+    "📰 Publish to WordPress": { "main": [[{ "node": "⚡ IndexNow + Google Ping", "type": "main", "index": 0 }]] },
+    "⚡ IndexNow + Google Ping": { "main": [[{ "node": "✅ Done", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true, "callerPolicy": "workflowsFromSameOwner" },
+  "tags": ["plantsmag", "us-market", "trending"],
+  "versionId": "wf1-v1"
+}

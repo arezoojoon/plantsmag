@@ -1,0 +1,45 @@
+────────────────────────────────────────────────────────────
+  🚀 PlantsMag Fast Indexing Engine v2.0
+  Site   : https://plantsmag.com
+  Limit  : 150 posts
+  Time   : 2026-07-06 13:08:39
+────────────────────────────────────────────────────────────
+[13:08:39] [INFO] Fetching last 150 published posts...
+[13:08:39] [INFO] Total URLs collected: 153
+────────────────────────────────────────────────────────────
+[13:08:39] [INFO] STEP 2 — Sending URLs to IndexNow API...
+[13:08:39] [INFO] IndexNow key file already exists.
+[13:08:40] [OK]   [IndexNow (Bing/Yandex/Naver)] Batch 1 — ✅ HTTP 200 — 100 URLs submitted
+[13:08:40] [OK]   [IndexNow (Bing/Yandex/Naver)] Batch 2 — ✅ HTTP 200 — 53 URLs submitted
+────────────────────────────────────────────────────────────
+[13:08:40] [INFO] STEP 3 — Google Sitemap & Crawl Signals...
+[13:08:40] [WARN] ⚠️ Sitemap returned HTTP 404 — check URL
+[13:08:40] [OK] ✅ IndexNow key file is publicly accessible
+[13:08:40] [INFO] STEP 3b — Google Indexing API (Direct Submission)...
+[13:08:41] [OK] ✅ Google Indexing API: 153 URLs submitted, 0 confirmed
+────────────────────────────────────────────────────────────
+[13:08:41] [INFO] STEP 4 — Refreshing post_modified dates for sitemap lastmod...
+[13:08:41] [OK] ✅ Refreshed post_modified for 150 posts
+────────────────────────────────────────────────────────────
+[13:08:41] [INFO] STEP 5 — Flushing caches and rewrite rules...
+[13:08:41] [OK] ✅ WordPress object cache flushed
+[13:08:41] [OK] ✅ Rewrite rules flushed (sitemap routes regenerated)
+[13:08:41] [INFO] LiteSpeed not detected — skipping
+[13:08:41] [OK] ✅ WordPress sitemap transients cleared (sitemap will regenerate on next hit)
+────────────────────────────────────────────────────────────
+[13:08:41] [INFO] STEP 6 — IndexNow Key Info
+[13:08:41] [INFO]   Key       : hOqzbxVWoalMVrDDYeA2EdkDSuxuNyd2
+[13:08:41] [INFO]   Key File  : https://plantsmag.com/hOqzbxVWoalMVrDDYeA2EdkDSuxuNyd2.txt
+[13:08:41] [INFO]   Verify at : https://api.indexnow.org/indexnow?url=https://plantsmag.com&key=hOqzbxVWoalMVrDDYeA2EdkDSuxuNyd2
+────────────────────────────────────────────────────────────
+
+  📊 SUMMARY
+  ─────────────────────────────────────────────────
+  URLs submitted to IndexNow : 153
+  Posts modified (lastmod)   : 150
+  Google Sitemap Ping        : ⚠️ HTTP 404
+  Total execution time       : 2.08s
+
+  ✅ Fast indexing complete!
+  📌 Sitemap: https://plantsmag.com/wp-sitemap.xml
+────────────────────────────────────────────────────────────

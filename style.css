@@ -1,0 +1,565 @@
+/*
+Theme Name: PlantsMag
+Theme URI: https://plantsmag.com/
+Author: PlantsMag Team
+Author URI: https://plantsmag.com/
+Description: Ultra Premium Custom Theme for PlantsMag Affiliate & Tools Platform.
+Version: 1.1.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: plantsmag
+*/
+
+/* ==========================================================================
+   1. CSS Variables (Design System)
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  /* Logo Color Palette */
+  --color-primary: #2A7B4C; /* Dark Green */
+  --color-secondary: #145A32; /* Deepest Green */
+  --color-accent: #2ECC71; /* Accent Light Green */
+  --color-gold: #D4AF37; /* Premium Gold */
+  
+  --color-bg-light: #F3F4F6; /* Light Gray for sections */
+  --color-bg-white: #FFFFFF;
+  --color-text-main: #2c3e50;
+  --color-text-muted: #7f8c8d;
+  
+  /* Typography */
+  --font-heading: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  /* Spacing & Borders */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-soft: 0 10px 30px rgba(20, 90, 50, 0.08);
+  --shadow-hover: 0 18px 40px rgba(42, 123, 76, 0.15);
+  --shadow-gold: 0 10px 25px rgba(212, 175, 55, 0.2);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   2. Base Reset & Global Styles
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-text-main);
+  background-color: var(--color-bg-white);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--color-secondary);
+  line-height: 1.25;
+  margin-top: 0;
+  margin-bottom: 0.75em;
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: 3rem; }
+h2 { font-size: 2.25rem; }
+h3 { font-size: 1.75rem; }
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-accent);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ==========================================================================
+   3. Header & Navigation (Ultra Premium)
+   ========================================================================== */
+.site-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  padding: 16px 0;
+  transition: var(--transition-smooth);
+}
+
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.site-branding {
+  display: flex;
+  align-items: center;
+}
+
+.site-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.site-title a {
+  color: var(--color-secondary);
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom logo accent based on provided image */
+.site-title a::after {
+  content: '.';
+  color: var(--color-gold);
+  -webkit-text-fill-color: var(--color-gold);
+}
+
+.main-navigation ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.main-navigation a {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--color-text-main);
+  position: relative;
+  padding: 8px 0;
+}
+
+.main-navigation a:hover {
+  color: var(--color-primary);
+}
+
+.main-navigation a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--color-accent);
+  transition: var(--transition-fast);
+}
+
+.main-navigation a:hover::after {
+  width: 100%;
+}
+
+/* Tool Button in Nav */
+.main-navigation .nav-cta a {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 50px;
+  box-shadow: var(--shadow-soft);
+}
+.main-navigation .nav-cta a:hover {
+  background: var(--color-secondary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+.main-navigation .nav-cta a::after { display: none; }
+
+/* ==========================================================================
+   4. Buttons & CTAs
+   ========================================================================== */
+.btn, .pm-btn, button, input["submit"] {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px 32px;
+  border-radius: 50px;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition-smooth);
+  text-align: center;
+  box-shadow: var(--shadow-soft);
+}
+
+.pm-btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  color: #fff;
+}
+
+.pm-btn-primary:hover {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+  color: #fff !important;
+}
+
+.pm-btn-gold {
+  background: linear-gradient(135deg, var(--color-gold) 0%, #f1c40f 100%);
+  color: var(--color-secondary);
+}
+
+.pm-btn-gold:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-gold);
+}
+
+.pm-btn-outline {
+  background: transparent;
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: none;
+}
+
+.pm-btn-outline:hover {
+  background: var(--color-primary);
+  color: #fff !important;
+}
+
+/* ==========================================================================
+   5. Forms & Inputs
+   ========================================================================== */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid transparent;
+  background-color: var(--color-bg-light);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-text-main);
+  transition: var(--transition-fast);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
+}
+
+/* ==========================================================================
+   6. Content Area & Glassmorphism Cards
+   ========================================================================== */
+.site-content {
+  padding: 60px 0;
+  min-height: 60vh;
+}
+
+.card, .wp-block-group {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(255,255,255,0.8);
+  transition: var(--transition-smooth);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-5px);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  border-radius: var(--radius-lg);
+}
+
+/* Specific overrides for WordPress Blocks on Home/Tools */
+.pm-hero-section {
+  background: var(--color-bg-light) !important;
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.pm-hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(46,204,113,0.05) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+
+.pm-tools-section > div > div {
+  background: #fff;
+  border: none !important;
+  box-shadow: var(--shadow-soft);
+  transition: var(--transition-smooth);
+}
+.pm-tools-section > div > div:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hover);
+  border-bottom: 4px solid var(--color-primary) !important;
+}
+
+.pm-newsletter {
+  background: var(--color-secondary) !important;
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+.pm-newsletter::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 150px; height: 150px;
+  background: linear-gradient(135deg, transparent 50%, rgba(212, 175, 55, 0.1) 50%);
+  border-radius: 0 var(--radius-lg) 0 0;
+  pointer-events: none;
+}
+
+/* Native Tools Shortcode Overrides */
+.watering-calculator-wrapper, .disease-finder-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 30px;
+  border: 1px solid var(--color-bg-light);
+}
+
+.pm-affiliate-section {
+  border-color: var(--color-gold) !important;
+  background: linear-gradient(to bottom right, #ffffff, #fffcf0) !important;
+  box-shadow: var(--shadow-gold);
+}
+
+/* ==========================================================================
+   7. Blog & Articles
+   ========================================================================== */
+.post {
+  margin-bottom: 50px;
+}
+
+.post-title {
+  margin-bottom: 15px;
+}
+
+.post-thumbnail img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 24px;
+}
+
+.entry-content p {
+  font-size: 1.125rem;
+  color: var(--color-text-main);
+  margin-bottom: 1.5em;
+}
+
+/* Callout Box in Articles */
+.article-callout {
+  background: var(--color-bg-light);
+  border-left: 5px solid var(--color-accent);
+  padding: 24px;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  margin: 32px 0;
+  font-style: italic;
+}
+
+/* ==========================================================================
+   8. Footer
+   ========================================================================== */
+.site-footer {
+  background-color: var(--color-secondary);
+  color: rgba(255,255,255,0.8);
+  padding: 60px 0 30px;
+  margin-top: 80px;
+}
+
+.site-footer a {
+  color: rgba(255,255,255,0.9);
+}
+
+.site-footer a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.footer-widgets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.footer-widget-title {
+  color: var(--color-gold);
+  font-size: 1.25rem;
+  margin-bottom: 20px;
+}
+
+.site-info {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 30px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.affiliate-disclosure-footer {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   9. Media Queries (Responsive)
+   ========================================================================== */
+@media (max-width: 768px) {
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.75rem; }
+  
+  .header-inner {
+    flex-direction: row;
+    gap: 8px;
+  }
+  
+  .site-header {
+    padding: 8px 0;
+  }
+
+  .site-content {
+    padding: 15px 0;
+  }
+
+  .pm-hero-section {
+    padding: 30px 16px !important;
+  }
+  
+  .main-navigation ul {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+  
+  .pm-tools-section > div {
+    flex-direction: column;
+  }
+  
+  .glass-panel, .card, .wp-block-group {
+    padding: 20px;
+  }
+  
+  /* Bottom Nav Overrides */
+  body {
+    padding-bottom: 70px;
+  }
+
+  .footer-widgets {
+    display: none; /* Hide heavy footer on mobile */
+  }
+
+  .site-footer {
+    padding: 30px 0 20px;
+    margin-top: 40px;
+  }
+}
+
+/* ==========================================================================
+   10. App Bottom Navigation
+   ========================================================================== */
+.pm-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .pm-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.04);
+    z-index: 9999;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pm-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    gap: 4px;
+    flex: 1;
+    text-decoration: none;
+    transition: var(--transition-fast);
+  }
+
+  .pm-nav-item svg {
+    stroke-width: 1.5;
+    transition: var(--transition-fast);
+  }
+
+  .pm-nav-item.active {
+    color: var(--color-primary);
+  }
+
+  .pm-nav-item.active svg {
+    stroke-width: 2.5;
+    stroke: var(--color-primary);
+  }
+
+  .pm-nav-item:hover {
+    color: var(--color-primary);
+  }
+}

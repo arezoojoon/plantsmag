@@ -1,0 +1,8 @@
+This directory is reserved for One Click Demo Import files.
+Once you have set up your site with content, you can export it and place the files here:
+
+1. content.xml (WordPress export file)
+2. widgets.wie (Widget export file, requires "Widget Importer & Exporter" plugin to generate)
+3. customizer.dat (Customizer export file, requires "Customizer Export/Import" plugin to generate)
+
+Update `inc/demo-import.php` if you change the filenames.

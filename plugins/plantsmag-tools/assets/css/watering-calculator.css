@@ -1,0 +1,314 @@
+/* ==========================================================================
+   PlantsMag Tools Common Styles (Form & App Container)
+   ========================================================================== */
+.pm-app-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid rgba(0,0,0,0.05);
+    overflow: hidden;
+    position: relative;
+    font-family: var(--font-body);
+}
+
+/* Native App Layout */
+.pm-native-app-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 80vh;
+    max-height: 90vh;
+}
+
+.pm-app-body-flex {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-bottom: 100px; /* Space for sticky footer */
+}
+
+/* Sticky Action Footer */
+.pm-action-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 1.5rem;
+    background: #fff;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    z-index: 10;
+}
+
+.pm-btn-block {
+    width: 100%;
+    justify-content: center;
+    padding: 1.2rem;
+    font-size: 1.2rem;
+}
+
+.pm-app-header {
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+    color: #fff;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.pm-app-header h2 {
+    color: #fff;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.pm-app-header p {
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+}
+
+.pm-app-body {
+    padding: 2rem;
+}
+
+.pm-input-group {
+    margin-bottom: 1.5rem;
+}
+
+.pm-input-group label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: var(--color-text-title);
+    font-size: 1rem;
+}
+
+/* Select Box */
+.pm-select-wrapper {
+    position: relative;
+}
+.pm-select-wrapper::after {
+    content: "▼";
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+.pm-select-wrapper select {
+    width: 100%;
+    appearance: none;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    font-family: var(--font-body);
+    color: var(--color-text-title);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.pm-select-wrapper select:focus {
+    border-color: var(--color-primary-light);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(42, 123, 76, 0.1);
+}
+
+/* Radio Cards */
+.pm-options-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+.pm-radio-card {
+    position: relative;
+    cursor: pointer;
+}
+.pm-radio-card input {
+    position: absolute;
+    opacity: 0;
+}
+.pm-card-content {
+    display: block;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-weight: 600;
+    color: var(--color-text-title);
+    transition: all 0.2s ease;
+}
+.pm-card-content small {
+    display: block;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+}
+.pm-radio-card input:checked + .pm-card-content {
+    border-color: var(--color-primary-light);
+    background: rgba(42, 123, 76, 0.05);
+    color: var(--color-primary-light);
+}
+
+/* ==========================================================================
+   Bottom Sheet (Native App Feel)
+   ========================================================================== */
+.pm-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.pm-bottom-sheet {
+    position: fixed;
+    bottom: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    background: #fff;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    z-index: 100000;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+    transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.pm-overlay.active { opacity: 1; pointer-events: auto; }
+.pm-bottom-sheet.active { bottom: 0; }
+
+.pm-sheet-handler {
+    width: 40px;
+    height: 5px;
+    background: #e2e8f0;
+    border-radius: 5px;
+    margin: 1rem auto;
+    cursor: grab;
+}
+
+.pm-sheet-content {
+    padding: 0 2rem 3rem;
+    overflow-y: auto;
+    max-height: 80vh;
+}
+
+.pm-sheet-content h3 {
+    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Result specific styling */
+.pm-result-highlight {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.pm-result-highlight span {
+    font-size: 5rem;
+    font-weight: 900;
+    color: var(--color-primary);
+    line-height: 1;
+    font-family: var(--font-display);
+}
+.pm-result-highlight small {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.pm-result-desc {
+    text-align: center;
+    font-size: 1.1rem;
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 2rem;
+}
+
+/* Affiliate Box */
+.pm-affiliate-box {
+    background: linear-gradient(135deg, rgba(255, 184, 76, 0.1) 0%, rgba(255, 217, 61, 0.1) 100%);
+    border: 1px solid rgba(255, 184, 76, 0.3);
+    padding: 1.5rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+.pm-affiliate-box h4 {
+    color: #B47800;
+    margin-bottom: 0.5rem;
+}
+.pm-affiliate-box p {
+    font-size: 0.95rem;
+    color: var(--color-text-body);
+    margin-bottom: 0;
+}
+
+/* Common Buttons */
+.pm-btn-primary {
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+.pm-btn-primary:hover {
+    background: var(--color-primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.pm-btn-secondary {
+    background: #f1f5f9;
+    color: var(--color-text-title);
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.pm-btn-secondary:hover {
+    background: #e2e8f0;
+}
+
+.pm-btn-outline {
+    background: transparent;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+.pm-btn-outline:hover {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .pm-options-row {
+        grid-template-columns: 1fr;
+    }
+}

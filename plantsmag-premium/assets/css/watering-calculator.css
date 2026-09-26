@@ -1,0 +1,283 @@
+/* Native-like App CSS for PlantsMag Tools */
+.pm-app-container {
+    --pm-primary: #2ecc71;
+    --pm-primary-dark: #27ae60;
+    --pm-bg: #f9f9f9;
+    --pm-card-bg: #ffffff;
+    --pm-text: #333333;
+    --pm-text-light: #777777;
+    --pm-border: #e0e0e0;
+    --pm-radius: 16px;
+    --pm-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--pm-card-bg);
+    border-radius: var(--pm-radius);
+    box-shadow: var(--pm-shadow);
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pm-app-header {
+    background: var(--pm-primary);
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+}
+
+.pm-app-header h2 {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+}
+
+.pm-app-header p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.pm-app-body {
+    padding: 24px 20px;
+}
+
+.pm-input-group {
+    margin-bottom: 20px;
+}
+
+.pm-input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--pm-text);
+    font-size: 15px;
+}
+
+.pm-select-wrapper {
+    position: relative;
+}
+
+.pm-select-wrapper select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--pm-border);
+    border-radius: 12px;
+    background-color: var(--pm-card-bg);
+    font-size: 16px;
+    color: var(--pm-text);
+    appearance: none;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+}
+
+.pm-select-wrapper select:focus {
+    border-color: var(--pm-primary);
+}
+
+.pm-select-wrapper::after {
+    content: "▼";
+    font-size: 12px;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--pm-text-light);
+}
+
+.pm-options-row {
+    display: flex;
+    gap: 12px;
+}
+
+.pm-radio-card {
+    flex: 1;
+    position: relative;
+    cursor: pointer;
+}
+
+.pm-radio-card input {
+    position: absolute;
+    opacity: 0;
+}
+
+.pm-card-content {
+    display: block;
+    padding: 12px;
+    text-align: center;
+    border: 2px solid var(--pm-border);
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--pm-text);
+    transition: all 0.2s ease;
+}
+
+.pm-card-content small {
+    display: block;
+    font-size: 12px;
+    color: var(--pm-text-light);
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+.pm-radio-card input:checked + .pm-card-content {
+    border-color: var(--pm-primary);
+    background-color: rgba(46, 204, 113, 0.05); /* very light primary */
+    color: var(--pm-primary-dark);
+}
+
+/* Base button styles */
+.pm-btn-primary, .pm-btn-secondary, .pm-btn-outline {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, background-color 0.2s;
+    outline: none;
+    display: block;
+    box-sizing: border-box;
+    text-decoration: none;
+}
+
+.pm-btn-primary {
+    background-color: var(--pm-primary);
+    color: white;
+    margin-top: 24px;
+}
+
+.pm-btn-primary:active {
+    transform: scale(0.98);
+    background-color: var(--pm-primary-dark);
+}
+
+.pm-btn-secondary {
+    background-color: #f0f0f0;
+    color: var(--pm-text);
+    margin-top: 16px;
+}
+
+.pm-btn-outline {
+    background-color: transparent;
+    color: var(--pm-primary);
+    border: 2px solid var(--pm-primary);
+    margin-top: 16px;
+}
+
+/* Bottom Sheet Setup (Native Feel) */
+.pm-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+    border-radius: var(--pm-radius);
+}
+
+.pm-bottom-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--pm-card-bg);
+    border-radius: 24px 24px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1);
+    z-index: 20;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    padding: 0 20px 24px;
+    box-sizing: border-box;
+}
+
+.pm-sheet-handler {
+    width: 40px;
+    height: 4px;
+    background: #dddddd;
+    border-radius: 2px;
+    margin: 12px auto 20px;
+}
+
+.pm-app-container.show-result .pm-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.pm-app-container.show-result .pm-bottom-sheet {
+    transform: translateY(0);
+}
+
+/* Result Content */
+.pm-sheet-content h3 {
+    text-align: center;
+    margin: 0 0 16px 0;
+    font-size: 20px;
+}
+
+.pm-result-highlight {
+    text-align: center;
+    color: var(--pm-primary);
+    margin-bottom: 12px;
+}
+
+.pm-result-highlight span {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.pm-result-highlight small {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.pm-result-desc {
+    text-align: center;
+    color: var(--pm-text-light);
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.pm-affiliate-box {
+    background: #f8fcf9; /* subtle tint */
+    border: 1px dashed var(--pm-primary);
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.pm-affiliate-box h4 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    color: var(--pm-primary-dark);
+}
+
+.pm-affiliate-box p {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    color: var(--pm-text-light);
+}
+
+.pm-affiliate-box .pm-btn-outline {
+    padding: 10px;
+    font-size: 14px;
+    margin-top: 0;
+}

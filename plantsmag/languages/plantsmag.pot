@@ -1,0 +1,219 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PlantsMag 1.0.0\n"
+"POT-Creation-Date: 2023-01-01 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Domain: plantsmag\n"
+
+#: inc/widgets.php:20 inc/widgets.php:57
+msgid "PlantsMag: Recent Plants"
+msgstr ""
+
+#: inc/widgets.php:21
+msgid "Display recent plant guides."
+msgstr ""
+
+#: inc/widgets.php:26 inc/widgets.php:58
+msgid "Recent Plant Guides"
+msgstr ""
+
+#: inc/widgets.php:62
+msgid "Title:"
+msgstr ""
+
+#: inc/widgets.php:66
+msgid "Number of posts:"
+msgstr ""
+
+#: inc/widgets.php:86
+msgid "PlantsMag: Newsletter"
+msgstr ""
+
+#: inc/widgets.php:87
+msgid "Newsletter signup form."
+msgstr ""
+
+#: inc/widgets.php:92 inc/widgets.php:121
+msgid "Subscribe"
+msgstr ""
+
+#: inc/widgets.php:107
+msgid "Enter your email"
+msgstr ""
+
+#: inc/widgets.php:125 inc/widgets.php:164
+msgid "Description:"
+msgstr ""
+
+#: inc/widgets.php:147
+msgid "PlantsMag: Social Links"
+msgstr ""
+
+#: inc/widgets.php:148
+msgid "Display social media links."
+msgstr ""
+
+#: inc/widgets.php:153 inc/widgets.php:168
+msgid "Follow Us"
+msgstr ""
+
+#: inc/widgets.php:172
+msgid "Configure social links in Customizer > Theme Options > Social Media."
+msgstr ""
+
+#: inc/template-tags.php:137
+msgid "Leave a Comment<span class=\"screen-reader-text\"> on %s</span>"
+msgstr ""
+
+#: inc/template-tags.php:148
+msgid "Edit <span class=\"screen-reader-text\">%s</span>"
+msgstr ""
+
+#: inc/template-tags.php:181
+msgid "min read"
+msgid_plural "min read"
+msgstr[0] ""
+msgstr[1] ""
+
+#: inc/template-tags.php:189
+msgid "Previous"
+msgstr ""
+
+#: inc/template-tags.php:190
+msgid "Next"
+msgstr ""
+
+#: inc/template-tags.php:191
+msgid "Page"
+msgstr ""
+
+#: inc/template-tags.php:199 inc/template-tags.php:208
+msgid "Home"
+msgstr ""
+
+#: inc/template-tags.php:201
+msgid "Add Menu"
+msgstr ""
+
+#: inc/template-tags.php:207
+msgid "Breadcrumb"
+msgstr ""
+
+#: inc/template-tags.php:234
+msgid "Search: %s"
+msgstr ""
+
+#: footer.php:27
+msgid "Copyright &copy; %1$s %2$s. All Rights Reserved."
+msgstr ""
+
+#: search.php:18
+msgid "Search Results for: %s"
+msgstr ""
+
+#: search.php:25
+msgid "%d result found"
+msgid_plural "%d results found"
+msgstr[0] ""
+msgstr[1] ""
+
+#: search.php:48 template-parts/content/content-none.php:29 template-parts/content/content-none.php:33
+msgid "Nothing Found"
+msgstr ""
+
+#: search.php:49 template-parts/content/content-none.php:30
+msgid "Sorry, but nothing matched your search terms. Please try again with some different keywords."
+msgstr ""
+
+#: 404.php:21
+msgid "Page Not Found"
+msgstr ""
+
+#: 404.php:22
+msgid "Oops! It looks like the page you're looking for has wilted away. Don't worry, let's help you find what you need."
+msgstr ""
+
+#: 404.php:29
+msgid "Or try one of these:"
+msgstr ""
+
+#: 404.php:31
+msgid "Go to Homepage"
+msgstr ""
+
+#: 404.php:32
+msgid "Browse Plant Guides"
+msgstr ""
+
+#: 404.php:33
+msgid "Read Product Reviews"
+msgstr ""
+
+#: 404.php:38
+msgid "Back to Home"
+msgstr ""
+
+#: comments.php:18
+msgid "%1$s Comment"
+msgid_plural "%1$s Comments"
+msgstr[0] ""
+msgstr[1] ""
+
+#: comments.php:38
+msgid "← Older Comments"
+msgstr ""
+
+#: comments.php:39
+msgid "Newer Comments →"
+msgstr ""
+
+#: comments.php:44
+msgid "Comments are closed."
+msgstr ""
+
+#: comments.php:51
+msgid "Leave a Comment"
+msgstr ""
+
+#: comments.php:54
+msgid "Your email address will not be published. Required fields are marked *"
+msgstr ""
+
+#: comments.php:79
+msgid "%1$s at %2$s"
+msgstr ""
+
+#: comments.php:87
+msgid "Your comment is awaiting moderation."
+msgstr ""
+
+#: comments.php:107
+msgid "Edit"
+msgstr ""
+
+#: template-parts/content/content-none.php:19
+msgid "Ready to publish your first post?"
+msgstr ""
+
+#: template-parts/content/content-none.php:20
+msgid "Your garden is waiting for content. Start by adding your first plant guide or article."
+msgstr ""
+
+#: template-parts/content/content-none.php:22
+msgid "Create Your First Post"
+msgstr ""
+
+#: template-parts/content/content-none.php:34
+msgid "It seems we can't find what you're looking for. Perhaps searching can help."
+msgstr ""
+
+#: template-parts/content/content.php:29 template-parts/content/content-search.php:31 template-parts/homepage/blog-grid.php:47
+msgid "Read More"
+msgstr ""

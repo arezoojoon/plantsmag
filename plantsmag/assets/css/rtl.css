@@ -1,0 +1,143 @@
+/**
+ * PlantsMag - RTL Support
+ *
+ * @package PlantsMag
+ */
+
+body.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Typography */
+.rtl h1,
+.rtl h2,
+.rtl h3,
+.rtl h4,
+.rtl h5,
+.rtl h6,
+.rtl p,
+.rtl li {
+    font-family: var(--pm-font-persian);
+}
+
+/* Lists */
+.rtl ul,
+.rtl ol {
+    padding-left: 0;
+    padding-right: var(--pm-space-6);
+}
+
+/* Blockquote */
+.rtl blockquote {
+    border-left: none;
+    border-right: 4px solid var(--pm-primary);
+    padding-left: 0;
+    padding-right: var(--pm-space-6);
+}
+
+/* Alignments */
+.rtl .alignleft {
+    float: right;
+    margin-left: var(--pm-space-6);
+    margin-right: 0;
+}
+
+.rtl .alignright {
+    float: left;
+    margin-right: var(--pm-space-6);
+    margin-left: 0;
+}
+
+/* Header */
+.rtl .header-actions {
+    flex-direction: row-reverse;
+}
+
+/* Navigation */
+.rtl .primary-menu .sub-menu {
+    left: auto;
+    right: 0;
+}
+
+/* Mobile Menu */
+.rtl .mobile-menu {
+    right: auto;
+    left: -100%;
+}
+
+.rtl .mobile-menu.is-open {
+    left: 0;
+}
+
+/* Hero */
+.rtl .pm-hero-social {
+    right: auto;
+    left: var(--pm-space-6);
+}
+
+.rtl .pm-hero-badge {
+    right: auto;
+    left: -20px;
+}
+
+/* Service Cards */
+.rtl .pm-service-card-link {
+    right: auto;
+    left: var(--pm-space-6);
+}
+
+/* Post Navigation */
+.rtl .pm-post-nav-prev svg {
+    transform: rotate(180deg);
+}
+
+.rtl .pm-post-nav-next svg {
+    transform: rotate(180deg);
+}
+
+/* Back to Top */
+.rtl .back-to-top {
+    right: auto;
+    left: var(--pm-space-6);
+}
+
+/* Cards */
+.rtl .pm-card-link svg,
+.rtl .pm-btn svg,
+.rtl .pm-link-arrow svg {
+    transform: rotate(180deg);
+}
+
+/* Comments */
+.rtl .pm-comment-body {
+    flex-direction: row-reverse;
+}
+
+/* Breadcrumbs */
+.rtl .breadcrumb-list {
+    flex-direction: row-reverse;
+}
+
+/* Social Share */
+.rtl .pm-share-buttons {
+    flex-direction: row-reverse;
+}
+
+/* Progress Bar animations from right */
+.rtl .pm-progress-fill {
+    transform-origin: right;
+}
+
+/* Footer */
+.rtl .footer-menu {
+    flex-direction: row-reverse;
+}
+
+/* Sidebar */
+.rtl .sidebar .widget-title {
+    border-right: 2px solid var(--pm-primary);
+    border-left: none;
+    padding-right: var(--pm-space-3);
+    padding-left: 0;
+}

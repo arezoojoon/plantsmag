@@ -1,0 +1,176 @@
+{
+  "name": "PlantsMag — Daily Article Publisher",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "⏰ Daily at 8AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "topic-selector",
+              "name": "topics",
+              "value": "=[\"Monstera deliciosa care mistakes\",\"Orchid root rot rescue\",\"Fiddle leaf fig branching trick\",\"Propagating pothos in water vs soil\",\"Calathea humidity requirements\",\"String of pearls watering guide\",\"Alocasia corm propagation\",\"Perlite breakdown in soil\",\"Spider mite extermination guide\",\"Variegated monstera tissue culture\",\"Boston fern double pot method\",\"Lechuza Pon vs LECA comparison\",\"Peace lily yellow leaves fix\",\"Snake plant overwatering signs\",\"Hoya kerrii care complete guide\",\"Begonia rex humidity tent trick\",\"Rubber plant pinching for bushiness\",\"ZZ plant propagation in water\",\"African violet watering from bottom\",\"Bird of paradise repotting guide\",\"Tradescantia pruning for fullness\",\"Succulent etiolation fix\",\"Cactus rot identification\",\"Air plant soaking schedule\",\"Philodendron brazil vs micans\"]",
+              "type": "array"
+            },
+            {
+              "id": "topic-pick",
+              "name": "selectedTopic",
+              "value": "={{ $json.topics[Math.floor(Math.random() * $json.topics.length)] }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "topic-selector-node",
+      "name": "🌿 Select Random Topic",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "REDACTED_API_KEY"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"You are an expert plant care writer for PlantsMag.com, targeting US English-speaking plant enthusiasts.\\n\\nWrite a comprehensive, engaging SEO article about: {{ $('🌿 Select Random Topic').item.json.selectedTopic }}\\n\\nRequirements:\\n- Title: Compelling, 50-60 chars, include power words (Warning, Secret, Trick, Expert, Proven)\\n- Word count: 1200-1500 words\\n- Structure: Intro (hook - problem the reader has), 4-5 H2 sections, Conclusion\\n- Each H2 section: 2-3 paragraphs of 80-120 words each\\n- Include specific, actionable plant care advice\\n- Mention Amazon affiliate products naturally (moisture meters, grow lights, perlite, etc)\\n- Tone: Conversational, passionate plant enthusiast, authoritative but friendly\\n- SEO: Include LSI keywords naturally\\n- End with 1 affiliate product recommendation box\\n\\nReturn ONLY valid JSON in this exact format (no markdown, no code blocks):\\n{\\\"title\\\": \\\"Article Title Here\\\", \\\"meta_description\\\": \\\"155 char compelling description\\\", \\\"content\\\": \\\"<full HTML article content with h2 tags and p tags>\\\"}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.8,\n    \"maxOutputTokens\": 4096\n  }\n}"
+      },
+      "id": "gemini-generator",
+      "name": "🤖 Gemini Article Generator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Gemini response and extract article data\nconst response = $input.item.json;\n\ntry {\n  // Get the text from Gemini response\n  const text = response.candidates[0].content.parts[0].text;\n  \n  // Clean up: remove markdown code blocks if present\n  let cleanText = text.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  \n  // Parse JSON\n  const article = JSON.parse(cleanText);\n  \n  // Validate\n  if (!article.title || !article.content) {\n    throw new Error('Missing title or content in Gemini response');\n  }\n  \n  // Enhance content with affiliate box template\n  const affiliateBox = `\n<div class=\"pm-affiliate-box\" style=\"background: linear-gradient(135deg, #f0fff4, #c6f6d5); border-left: 4px solid #38a169; padding: 20px; margin: 30px 0; border-radius: 8px;\">\n  <h3 style=\"color: #276749; margin-top: 0;\">🛒 Recommended Tool</h3>\n  <p>The single best investment for any serious plant parent is a high-quality <strong>soil moisture meter</strong>. It eliminates all guesswork and prevents both overwatering and underwatering — the #1 cause of plant death.</p>\n  <a href=\"https://www.amazon.com/s?k=soil+moisture+meter+plants&tag=plantsmag-20\" target=\"_blank\" rel=\"noopener\" style=\"display: inline-block; background: #FF9900; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;\">🔍 Check Best Options on Amazon →</a>\n</div>`;\n  \n  // Add affiliate box before last paragraph\n  let content = article.content;\n  const lastPIndex = content.lastIndexOf('<p>');\n  if (lastPIndex > 0) {\n    content = content.slice(0, lastPIndex) + affiliateBox + content.slice(lastPIndex);\n  } else {\n    content += affiliateBox;\n  }\n  \n  return {\n    title: article.title,\n    meta_description: article.meta_description || '',\n    content: content,\n    topic: $('🌿 Select Random Topic').item.json.selectedTopic\n  };\n  \n} catch (e) {\n  throw new Error(`Failed to parse Gemini response: ${e.message}. Raw: ${JSON.stringify(response).slice(0, 500)}`);\n}"
+      },
+      "id": "parse-article",
+      "name": "📝 Parse & Enhance Article",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"title\": \"{{ $json.title }}\",\n  \"content\": \"{{ $json.content }}\",\n  \"excerpt\": \"{{ $json.meta_description }}\",\n  \"status\": \"publish\",\n  \"categories\": [5],\n  \"comment_status\": \"closed\",\n  \"ping_status\": \"closed\"\n}",
+        "options": {}
+      },
+      "id": "wp-publish",
+      "name": "📰 Publish to WordPress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "wp-plantsmag-auth",
+          "name": "PlantsMag WordPress Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://plantsmag.com/fast_index.php",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "trigger-fast-index",
+      "name": "⚡ Fast Index (IndexNow)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log-result",
+              "name": "result",
+              "value": "=✅ Published: {{ $('📝 Parse & Enhance Article').item.json.title }} | Post ID: {{ $('📰 Publish to WordPress').item.json.id }} | IndexNow triggered",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "log-success",
+      "name": "✅ Log Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1680, 300]
+    }
+  ],
+  "connections": {
+    "⏰ Daily at 8AM": {
+      "main": [[{ "node": "🌿 Select Random Topic", "type": "main", "index": 0 }]]
+    },
+    "🌿 Select Random Topic": {
+      "main": [[{ "node": "🤖 Gemini Article Generator", "type": "main", "index": 0 }]]
+    },
+    "🤖 Gemini Article Generator": {
+      "main": [[{ "node": "📝 Parse & Enhance Article", "type": "main", "index": 0 }]]
+    },
+    "📝 Parse & Enhance Article": {
+      "main": [[{ "node": "📰 Publish to WordPress", "type": "main", "index": 0 }]]
+    },
+    "📰 Publish to WordPress": {
+      "main": [[{ "node": "⚡ Fast Index (IndexNow)", "type": "main", "index": 0 }]]
+    },
+    "⚡ Fast Index (IndexNow)": {
+      "main": [[{ "node": "✅ Log Result", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["plantsmag", "seo", "automation"],
+  "triggerCount": 0,
+  "updatedAt": "2026-05-13T16:00:00.000Z",
+  "versionId": "1"
+}

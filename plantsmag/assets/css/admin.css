@@ -1,0 +1,50 @@
+/**
+ * PlantsMag - Admin Styles
+ *
+ * @package PlantsMag
+ */
+
+/* Meta Box Styles */
+.plantsmag-meta-box {
+    padding: 10px;
+}
+
+.plantsmag-meta-box label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.plantsmag-meta-box select,
+.plantsmag-meta-box input[type="text"],
+.plantsmag-meta-box textarea {
+    width: 100%;
+}
+
+.plantsmag-meta-box p {
+    margin-bottom: 15px;
+}
+
+/* Dashboard Widget */
+.plantsmag-dashboard-widget {
+    padding: 10px;
+}
+
+.plantsmag-dashboard-widget .quick-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.plantsmag-dashboard-widget .quick-links a {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #2D4A3E;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.plantsmag-dashboard-widget .quick-links a:hover {
+    background: #1D3329;
+}

@@ -1,0 +1,100 @@
+{
+  "name": "WF4 — Lead Magnet Email Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "plantsmag-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf4-webhook",
+      "name": "📥 Lead Capture Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 300],
+      "webhookId": "plantsmag-lead-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and enrich lead data\nconst body = $input.item.json.body || $input.item.json;\n\nconst email = String(body.email || '').trim().toLowerCase();\nif (!email || !email.includes('@')) {\n  throw new Error('Invalid email: ' + email);\n}\n\n// Affiliate product DB\nconst PRODUCTS = {\n  'fungal':     { name: 'Bonide Copper Fungicide',    asin: 'B00BS3NT4Q', price: '$14.99', icon: '🍄' },\n  'spider mite':{ name: 'Neem Oil Spray',             asin: 'B07M7KPPPN', price: '$12.99', icon: '🕷️' },\n  'root rot':   { name: 'Hydrogen Peroxide 3%',       asin: 'B00ILNHA6G', price: '$9.99',  icon: '💊' },\n  'overwater':  { name: 'XLUX Soil Moisture Meter',   asin: 'B07KBKXZL1', price: '$11.99', icon: '📡' },\n  'nutrient':   { name: 'Miracle-Gro Liquid Fertilizer', asin: 'B00BIO560G', price: '$13.49', icon: '🧪' },\n  'scale':      { name: 'Insecticidal Soap Spray',   asin: 'B00B4VE6H8', price: '$8.99',  icon: '🪲' },\n  'powdery':    { name: 'Garden Safe Fungicide',      asin: 'B0001YVDE0', price: '$10.99', icon: '⬜' },\n};\n\nconst WATERING_PRODUCTS = {\n  succulent:  { name: 'XLUX Soil Moisture Meter', asin: 'B07KBKXZL1', price: '$11.99', icon: '📡' },\n  tropical:   { name: 'LEVOIT Humidifier',        asin: 'B08L73ZT3N', price: '$79.99', icon: '💨' },\n  fern:       { name: 'LEVOIT Humidifier',        asin: 'B08L73ZT3N', price: '$79.99', icon: '💨' },\n  default:    { name: 'LECHUZA Self-Watering Pot', asin: 'B07N1CLX3J', price: '$89.00', icon: '🏺' },\n};\n\nconst leadType    = body.lead_type  || 'disease';\nconst diseaseName = body.disease_name || '';\nconst plantName   = body.plant_name   || 'your plant';\nconst severity    = body.severity     || 'medium';\nconst explanation = body.explanation  || '';\nconst waterDays   = body.watering_days || null;\n\n// Find primary product\nlet primaryProduct = { name: 'Spider Farmer Grow Light', asin: 'B07RHB8P5C', price: '$109', icon: '💡' };\nif (leadType === 'disease') {\n  for (const [key, p] of Object.entries(PRODUCTS)) {\n    if (diseaseName.toLowerCase().includes(key)) { primaryProduct = p; break; }\n  }\n} else {\n  const plantKey = (body.plant_name || '').toLowerCase();\n  primaryProduct = WATERING_PRODUCTS[plantKey] || WATERING_PRODUCTS.default;\n}\n\nconst MOISTURE = { name: 'XLUX Soil Moisture Meter', asin: 'B07KBKXZL1', price: '$11.99', icon: '📡' };\n\n// Severity color\nconst severityColor = { low: '#22c55e', medium: '#f59e0b', high: '#ef4444', critical: '#7c3aed' };\nconst sColor = severityColor[severity] || '#f59e0b';\n\nreturn {\n  email,\n  leadType,\n  diseaseName,\n  plantName,\n  severity,\n  explanation,\n  waterDays,\n  primaryProduct,\n  moistureProduct: MOISTURE,\n  severityColor:   sColor,\n  amzTag:    'plantsmag-20',\n  amzTagAE:  'plantsmag-ae-21',\n};"
+      },
+      "id": "wf4-enrich",
+      "name": "⚙️ Enrich Lead Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": { "parameters": [{ "name": "key", "value": "REDACTED_API_KEY" }] },
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [{ "name": "Content-Type", "value": "application/json" }] },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\"contents\":[{\"parts\":[{\"text\":\"You are a friendly plant care expert writing a personalized email for a plant parent.\\n\\nThey used the PlantsMag {{ $json.leadType === 'disease' ? 'AI Disease Finder' : 'Watering Calculator' }} tool.\\n{{ $json.leadType === 'disease' ? 'Their plant was diagnosed with: ' + $json.diseaseName + ' (severity: ' + $json.severity + ')' : 'Their plant (' + $json.plantName + ') needs watering every ' + $json.waterDays + ' days.' }}\\n\\nWrite a warm, expert, 150-word personalized email body (NO subject line, NO greeting - just the body content). Include:\\n1. Acknowledge their specific problem\\n2. Give 1 urgent action step for TODAY\\n3. Give a 7-day mini-recovery plan (bullet points)\\n4. One expert tip they won't find elsewhere\\n\\nTone: warm friend who's a plant expert. No fluff.\"}]}],\"generationConfig\":{\"temperature\":0.7,\"maxOutputTokens\":512}}"
+      },
+      "id": "wf4-gemini",
+      "name": "🤖 Gemini: Personalized Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('⚙️ Enrich Lead Data').item.json;\nconst geminiResp = $input.item.json;\n\nconst emailBody = geminiResp?.candidates?.[0]?.content?.parts?.[0]?.text || 'Please check our website for detailed care instructions.';\n\n// Build HTML email\nconst p1 = lead.primaryProduct;\nconst p2 = lead.moistureProduct;\n\nconst html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Your PlantsMag Care Plan</title>\n<style>\n  body { margin:0; padding:0; background:#0f1f0f; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }\n  .wrapper { max-width:600px; margin:0 auto; background:#1a2e1a; }\n  .header { background:linear-gradient(135deg,#16a34a,#14532d); padding:32px 40px; text-align:center; }\n  .logo { font-size:24px; font-weight:800; color:#fff; letter-spacing:-0.02em; }\n  .logo span { color:#4ade80; }\n  .hero-tag { display:inline-block; background:rgba(255,255,255,0.15); color:rgba(255,255,255,0.9); font-size:12px; font-weight:600; padding:4px 12px; border-radius:100px; margin-top:8px; }\n  .body { padding:36px 40px; }\n  .greeting { font-size:22px; font-weight:700; color:#fff; margin-bottom:8px; }\n  .subtext { font-size:14px; color:rgba(255,255,255,0.5); margin-bottom:24px; }\n  .diagnosis-card { background:rgba(0,0,0,0.3); border:1px solid ${lead.severityColor}40; border-left:4px solid ${lead.severityColor}; border-radius:12px; padding:16px 20px; margin-bottom:24px; }\n  .diag-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.4); margin-bottom:6px; }\n  .diag-name { font-size:18px; font-weight:700; color:${lead.severityColor}; }\n  .email-body { font-size:14px; color:rgba(255,255,255,0.75); line-height:1.8; white-space:pre-line; margin-bottom:28px; }\n  .products-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:12px; }\n  .product-row { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px; margin-bottom:10px; text-decoration:none; }\n  .prod-icon { font-size:22px; }\n  .prod-info { flex:1; }\n  .prod-name { font-size:13px; font-weight:600; color:#fff; }\n  .prod-price { font-size:12px; color:#4ade80; margin-top:2px; }\n  .prod-btn { background:#FF9900; color:#fff; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:700; text-decoration:none; white-space:nowrap; }\n  .cta-section { background:linear-gradient(135deg,rgba(42,123,76,0.15),rgba(42,123,76,0.05)); border:1px solid rgba(42,123,76,0.25); border-radius:16px; padding:24px; text-align:center; margin-top:24px; }\n  .cta-text { color:rgba(255,255,255,0.6); font-size:13px; margin-bottom:14px; }\n  .cta-btn { display:inline-block; background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; padding:13px 28px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; }\n  .footer { padding:20px 40px; border-top:1px solid rgba(255,255,255,0.06); }\n  .footer p { font-size:11px; color:rgba(255,255,255,0.25); margin:0; line-height:1.6; }\n  .footer a { color:rgba(255,255,255,0.35); }\n</style>\n</head>\n<body>\n<div class=\"wrapper\">\n  <div class=\"header\">\n    <div class=\"logo\">🌿 Plants<span>Mag</span></div>\n    <div class=\"hero-tag\">${lead.leadType === 'disease' ? '🔬 AI Disease Diagnosis' : '💧 Watering Calculator'} — Personalized Report</div>\n  </div>\n  <div class=\"body\">\n    <div class=\"greeting\">Your Plant Care Plan is Ready 🌱</div>\n    <div class=\"subtext\">Based on your ${lead.leadType === 'disease' ? `diagnosis: <strong style=\"color:${lead.severityColor}\">${lead.diseaseName || 'Plant Condition'}</strong>` : `${lead.plantName} watering schedule (every ${lead.waterDays} days)`}</div>\n    \n    ${lead.leadType === 'disease' ? `\n    <div class=\"diagnosis-card\">\n      <div class=\"diag-label\">Diagnosed Condition</div>\n      <div class=\"diag-name\">${lead.diseaseName || 'Unknown Condition'}</div>\n      ${lead.explanation ? `<p style=\"font-size:12px;color:rgba(255,255,255,0.5);margin:6px 0 0;\">${lead.explanation.slice(0, 120)}...</p>` : ''}\n    </div>` : `\n    <div class=\"diagnosis-card\">\n      <div class=\"diag-label\">Your Watering Schedule</div>\n      <div class=\"diag-name\">Every ${lead.waterDays} days 💧</div>\n      <p style=\"font-size:12px;color:rgba(255,255,255,0.5);margin:6px 0 0;\">Based on your ${lead.plantName}, pot type, temperature, and light conditions.</p>\n    </div>`}\n\n    <div class=\"email-body\">${emailBody}</div>\n\n    <div class=\"products-title\">🛒 Expert-Recommended Products</div>\n    \n    <a href=\"https://www.amazon.com/dp/${p1.asin}?tag=${lead.amzTag}\" class=\"product-row\" target=\"_blank\">\n      <span class=\"prod-icon\">${p1.icon}</span>\n      <div class=\"prod-info\">\n        <div class=\"prod-name\">${p1.name}</div>\n        <div class=\"prod-price\">${p1.price} — Amazon US</div>\n      </div>\n      <a href=\"https://www.amazon.com/dp/${p1.asin}?tag=${lead.amzTag}\" class=\"prod-btn\" target=\"_blank\">Buy →</a>\n    </a>\n    \n    <a href=\"https://www.amazon.com/dp/${p2.asin}?tag=${lead.amzTag}\" class=\"product-row\" target=\"_blank\">\n      <span class=\"prod-icon\">${p2.icon}</span>\n      <div class=\"prod-info\">\n        <div class=\"prod-name\">${p2.name}</div>\n        <div class=\"prod-price\">${p2.price} — Amazon US</div>\n      </div>\n      <a href=\"https://www.amazon.com/dp/${p2.asin}?tag=${lead.amzTag}\" class=\"prod-btn\" target=\"_blank\">Buy →</a>\n    </a>\n\n    <div class=\"cta-section\">\n      <p class=\"cta-text\">Need a second opinion? Use our free AI tools anytime.</p>\n      <a href=\"https://plantsmag.com/plant-disease-finder/\" class=\"cta-btn\">🌿 Back to PlantsMag</a>\n    </div>\n  </div>\n  <div class=\"footer\">\n    <p>You received this because you used a PlantsMag free tool. <a href=\"https://plantsmag.com\">Unsubscribe</a> | PlantsMag.com — The Plant Parent's Guide</p>\n    <p style=\"margin-top:6px;\">As an Amazon Associate we earn from qualifying purchases.</p>\n  </div>\n</div>\n</body>\n</html>`;\n\nreturn {\n  to:      lead.email,\n  subject: lead.leadType === 'disease'\n    ? `Your ${lead.diseaseName || 'Plant'} Treatment Plan — PlantsMag 🌿`\n    : `Your ${lead.plantName} Watering Schedule — PlantsMag 💧`,\n  html,\n  leadSummary: `${lead.leadType} | ${lead.diseaseName || lead.plantName} | ${lead.email}`\n};"
+      },
+      "id": "wf4-build",
+      "name": "📧 Build HTML Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "wf4-gmail",
+      "name": "📬 Send via Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1220, 300],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-plantsmag",
+          "name": "PlantsMag Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\": true, \"message\": \"Lead captured. Email sent to \" + $('⚙️ Enrich Lead Data').item.json.email}"
+      },
+      "id": "wf4-respond",
+      "name": "✅ Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1480, 300]
+    }
+  ],
+  "connections": {
+    "📥 Lead Capture Webhook": { "main": [[{ "node": "⚙️ Enrich Lead Data", "type": "main", "index": 0 }]] },
+    "⚙️ Enrich Lead Data":    { "main": [[{ "node": "🤖 Gemini: Personalized Email", "type": "main", "index": 0 }]] },
+    "🤖 Gemini: Personalized Email": { "main": [[{ "node": "📧 Build HTML Email", "type": "main", "index": 0 }]] },
+    "📧 Build HTML Email":    { "main": [[{ "node": "📬 Send via Gmail", "type": "main", "index": 0 }]] },
+    "📬 Send via Gmail":      { "main": [[{ "node": "✅ Respond 200", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": ["plantsmag", "lead-magnet", "email", "webhook"]
+}

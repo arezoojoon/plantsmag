@@ -1,0 +1,2296 @@
+[
+  {
+    "updatedAt": "2026-05-14T09:02:21.908Z",
+    "createdAt": "2026-05-14T09:02:20.998Z",
+    "id": "s3ZikB24vTM4g21D",
+    "name": "WF4 \u2014 Lead Magnet Email Engine",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "plantsmag-lead",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "wf4-webhook",
+        "name": "\ud83d\udce5 Lead Capture Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          180,
+          300
+        ],
+        "webhookId": "plantsmag-lead-v1"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Validate and enrich lead data\nconst body = $input.item.json.body || $input.item.json;\n\nconst email = String(body.email || '').trim().toLowerCase();\nif (!email || !email.includes('@')) {\n  throw new Error('Invalid email: ' + email);\n}\n\n// Affiliate product DB\nconst PRODUCTS = {\n  'fungal':     { name: 'Bonide Copper Fungicide',    asin: 'B00BS3NT4Q', price: '$14.99', icon: '\ud83c\udf44' },\n  'spider mite':{ name: 'Neem Oil Spray',             asin: 'B07M7KPPPN', price: '$12.99', icon: '\ud83d\udd77\ufe0f' },\n  'root rot':   { name: 'Hydrogen Peroxide 3%',       asin: 'B00ILNHA6G', price: '$9.99',  icon: '\ud83d\udc8a' },\n  'overwater':  { name: 'XLUX Soil Moisture Meter',   asin: 'B07KBKXZL1', price: '$11.99', icon: '\ud83d\udce1' },\n  'nutrient':   { name: 'Miracle-Gro Liquid Fertilizer', asin: 'B00BIO560G', price: '$13.49', icon: '\ud83e\uddea' },\n  'scale':      { name: 'Insecticidal Soap Spray',   asin: 'B00B4VE6H8', price: '$8.99',  icon: '\ud83e\udeb2' },\n  'powdery':    { name: 'Garden Safe Fungicide',      asin: 'B0001YVDE0', price: '$10.99', icon: '\u2b1c' },\n};\n\nconst WATERING_PRODUCTS = {\n  succulent:  { name: 'XLUX Soil Moisture Meter', asin: 'B07KBKXZL1', price: '$11.99', icon: '\ud83d\udce1' },\n  tropical:   { name: 'LEVOIT Humidifier',        asin: 'B08L73ZT3N', price: '$79.99', icon: '\ud83d\udca8' },\n  fern:       { name: 'LEVOIT Humidifier',        asin: 'B08L73ZT3N', price: '$79.99', icon: '\ud83d\udca8' },\n  default:    { name: 'LECHUZA Self-Watering Pot', asin: 'B07N1CLX3J', price: '$89.00', icon: '\ud83c\udffa' },\n};\n\nconst leadType    = body.lead_type  || 'disease';\nconst diseaseName = body.disease_name || '';\nconst plantName   = body.plant_name   || 'your plant';\nconst severity    = body.severity     || 'medium';\nconst explanation = body.explanation  || '';\nconst waterDays   = body.watering_days || null;\n\n// Find primary product\nlet primaryProduct = { name: 'Spider Farmer Grow Light', asin: 'B07RHB8P5C', price: '$109', icon: '\ud83d\udca1' };\nif (leadType === 'disease') {\n  for (const [key, p] of Object.entries(PRODUCTS)) {\n    if (diseaseName.toLowerCase().includes(key)) { primaryProduct = p; break; }\n  }\n} else {\n  const plantKey = (body.plant_name || '').toLowerCase();\n  primaryProduct = WATERING_PRODUCTS[plantKey] || WATERING_PRODUCTS.default;\n}\n\nconst MOISTURE = { name: 'XLUX Soil Moisture Meter', asin: 'B07KBKXZL1', price: '$11.99', icon: '\ud83d\udce1' };\n\n// Severity color\nconst severityColor = { low: '#22c55e', medium: '#f59e0b', high: '#ef4444', critical: '#7c3aed' };\nconst sColor = severityColor[severity] || '#f59e0b';\n\nreturn {\n  email,\n  leadType,\n  diseaseName,\n  plantName,\n  severity,\n  explanation,\n  waterDays,\n  primaryProduct,\n  moistureProduct: MOISTURE,\n  severityColor:   sColor,\n  amzTag:    'plantsmag-20',\n  amzTagAE:  'plantsmag-ae-21',\n};"
+        },
+        "id": "wf4-enrich",
+        "name": "\u2699\ufe0f Enrich Lead Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          440,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "REDACTED_API_KEY"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={\"contents\":[{\"parts\":[{\"text\":\"You are a friendly plant care expert writing a personalized email for a plant parent.\\n\\nThey used the PlantsMag {{ $json.leadType === 'disease' ? 'AI Disease Finder' : 'Watering Calculator' }} tool.\\n{{ $json.leadType === 'disease' ? 'Their plant was diagnosed with: ' + $json.diseaseName + ' (severity: ' + $json.severity + ')' : 'Their plant (' + $json.plantName + ') needs watering every ' + $json.waterDays + ' days.' }}\\n\\nWrite a warm, expert, 150-word personalized email body (NO subject line, NO greeting - just the body content). Include:\\n1. Acknowledge their specific problem\\n2. Give 1 urgent action step for TODAY\\n3. Give a 7-day mini-recovery plan (bullet points)\\n4. One expert tip they won't find elsewhere\\n\\nTone: warm friend who's a plant expert. No fluff.\"}]}],\"generationConfig\":{\"temperature\":0.7,\"maxOutputTokens\":512}}"
+        },
+        "id": "wf4-gemini",
+        "name": "\ud83e\udd16 Gemini: Personalized Email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          700,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const lead = $('\u2699\ufe0f Enrich Lead Data').item.json;\nconst geminiResp = $input.item.json;\n\nconst emailBody = geminiResp?.candidates?.[0]?.content?.parts?.[0]?.text || 'Please check our website for detailed care instructions.';\n\n// Build HTML email\nconst p1 = lead.primaryProduct;\nconst p2 = lead.moistureProduct;\n\nconst html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Your PlantsMag Care Plan</title>\n<style>\n  body { margin:0; padding:0; background:#0f1f0f; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }\n  .wrapper { max-width:600px; margin:0 auto; background:#1a2e1a; }\n  .header { background:linear-gradient(135deg,#16a34a,#14532d); padding:32px 40px; text-align:center; }\n  .logo { font-size:24px; font-weight:800; color:#fff; letter-spacing:-0.02em; }\n  .logo span { color:#4ade80; }\n  .hero-tag { display:inline-block; background:rgba(255,255,255,0.15); color:rgba(255,255,255,0.9); font-size:12px; font-weight:600; padding:4px 12px; border-radius:100px; margin-top:8px; }\n  .body { padding:36px 40px; }\n  .greeting { font-size:22px; font-weight:700; color:#fff; margin-bottom:8px; }\n  .subtext { font-size:14px; color:rgba(255,255,255,0.5); margin-bottom:24px; }\n  .diagnosis-card { background:rgba(0,0,0,0.3); border:1px solid ${lead.severityColor}40; border-left:4px solid ${lead.severityColor}; border-radius:12px; padding:16px 20px; margin-bottom:24px; }\n  .diag-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.4); margin-bottom:6px; }\n  .diag-name { font-size:18px; font-weight:700; color:${lead.severityColor}; }\n  .email-body { font-size:14px; color:rgba(255,255,255,0.75); line-height:1.8; white-space:pre-line; margin-bottom:28px; }\n  .products-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:12px; }\n  .product-row { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px; margin-bottom:10px; text-decoration:none; }\n  .prod-icon { font-size:22px; }\n  .prod-info { flex:1; }\n  .prod-name { font-size:13px; font-weight:600; color:#fff; }\n  .prod-price { font-size:12px; color:#4ade80; margin-top:2px; }\n  .prod-btn { background:#FF9900; color:#fff; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:700; text-decoration:none; white-space:nowrap; }\n  .cta-section { background:linear-gradient(135deg,rgba(42,123,76,0.15),rgba(42,123,76,0.05)); border:1px solid rgba(42,123,76,0.25); border-radius:16px; padding:24px; text-align:center; margin-top:24px; }\n  .cta-text { color:rgba(255,255,255,0.6); font-size:13px; margin-bottom:14px; }\n  .cta-btn { display:inline-block; background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; padding:13px 28px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; }\n  .footer { padding:20px 40px; border-top:1px solid rgba(255,255,255,0.06); }\n  .footer p { font-size:11px; color:rgba(255,255,255,0.25); margin:0; line-height:1.6; }\n  .footer a { color:rgba(255,255,255,0.35); }\n</style>\n</head>\n<body>\n<div class=\"wrapper\">\n  <div class=\"header\">\n    <div class=\"logo\">\ud83c\udf3f Plants<span>Mag</span></div>\n    <div class=\"hero-tag\">${lead.leadType === 'disease' ? '\ud83d\udd2c AI Disease Diagnosis' : '\ud83d\udca7 Watering Calculator'} \u2014 Personalized Report</div>\n  </div>\n  <div class=\"body\">\n    <div class=\"greeting\">Your Plant Care Plan is Ready \ud83c\udf31</div>\n    <div class=\"subtext\">Based on your ${lead.leadType === 'disease' ? `diagnosis: <strong style=\"color:${lead.severityColor}\">${lead.diseaseName || 'Plant Condition'}</strong>` : `${lead.plantName} watering schedule (every ${lead.waterDays} days)`}</div>\n    \n    ${lead.leadType === 'disease' ? `\n    <div class=\"diagnosis-card\">\n      <div class=\"diag-label\">Diagnosed Condition</div>\n      <div class=\"diag-name\">${lead.diseaseName || 'Unknown Condition'}</div>\n      ${lead.explanation ? `<p style=\"font-size:12px;color:rgba(255,255,255,0.5);margin:6px 0 0;\">${lead.explanation.slice(0, 120)}...</p>` : ''}\n    </div>` : `\n    <div class=\"diagnosis-card\">\n      <div class=\"diag-label\">Your Watering Schedule</div>\n      <div class=\"diag-name\">Every ${lead.waterDays} days \ud83d\udca7</div>\n      <p style=\"font-size:12px;color:rgba(255,255,255,0.5);margin:6px 0 0;\">Based on your ${lead.plantName}, pot type, temperature, and light conditions.</p>\n    </div>`}\n\n    <div class=\"email-body\">${emailBody}</div>\n\n    <div class=\"products-title\">\ud83d\uded2 Expert-Recommended Products</div>\n    \n    <a href=\"https://www.amazon.com/dp/${p1.asin}?tag=${lead.amzTag}\" class=\"product-row\" target=\"_blank\">\n      <span class=\"prod-icon\">${p1.icon}</span>\n      <div class=\"prod-info\">\n        <div class=\"prod-name\">${p1.name}</div>\n        <div class=\"prod-price\">${p1.price} \u2014 Amazon US</div>\n      </div>\n      <a href=\"https://www.amazon.com/dp/${p1.asin}?tag=${lead.amzTag}\" class=\"prod-btn\" target=\"_blank\">Buy \u2192</a>\n    </a>\n    \n    <a href=\"https://www.amazon.com/dp/${p2.asin}?tag=${lead.amzTag}\" class=\"product-row\" target=\"_blank\">\n      <span class=\"prod-icon\">${p2.icon}</span>\n      <div class=\"prod-info\">\n        <div class=\"prod-name\">${p2.name}</div>\n        <div class=\"prod-price\">${p2.price} \u2014 Amazon US</div>\n      </div>\n      <a href=\"https://www.amazon.com/dp/${p2.asin}?tag=${lead.amzTag}\" class=\"prod-btn\" target=\"_blank\">Buy \u2192</a>\n    </a>\n\n    <div class=\"cta-section\">\n      <p class=\"cta-text\">Need a second opinion? Use our free AI tools anytime.</p>\n      <a href=\"https://plantsmag.com/plant-disease-finder/\" class=\"cta-btn\">\ud83c\udf3f Back to PlantsMag</a>\n    </div>\n  </div>\n  <div class=\"footer\">\n    <p>You received this because you used a PlantsMag free tool. <a href=\"https://plantsmag.com\">Unsubscribe</a> | PlantsMag.com \u2014 The Plant Parent's Guide</p>\n    <p style=\"margin-top:6px;\">As an Amazon Associate we earn from qualifying purchases.</p>\n  </div>\n</div>\n</body>\n</html>`;\n\nreturn {\n  to:      lead.email,\n  subject: lead.leadType === 'disease'\n    ? `Your ${lead.diseaseName || 'Plant'} Treatment Plan \u2014 PlantsMag \ud83c\udf3f`\n    : `Your ${lead.plantName} Watering Schedule \u2014 PlantsMag \ud83d\udca7`,\n  html,\n  leadSummary: `${lead.leadType} | ${lead.diseaseName || lead.plantName} | ${lead.email}`\n};"
+        },
+        "id": "wf4-build",
+        "name": "\ud83d\udce7 Build HTML Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "sendTo": "={{ $json.to }}",
+          "subject": "={{ $json.subject }}",
+          "emailType": "html",
+          "message": "={{ $json.html }}",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "id": "wf4-gmail",
+        "name": "\ud83d\udcec Send via Gmail",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "position": [
+          1220,
+          300
+        ],
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "gmail-plantsmag",
+            "name": "PlantsMag Gmail"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={\"success\": true, \"message\": \"Lead captured. Email sent to \" + $('\u2699\ufe0f Enrich Lead Data').item.json.email}"
+        },
+        "id": "wf4-respond",
+        "name": "\u2705 Respond 200",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [
+          1480,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "\ud83d\udce5 Lead Capture Webhook": {
+        "main": [
+          [
+            {
+              "node": "\u2699\ufe0f Enrich Lead Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "\u2699\ufe0f Enrich Lead Data": {
+        "main": [
+          [
+            {
+              "node": "\ud83e\udd16 Gemini: Personalized Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "\ud83e\udd16 Gemini: Personalized Email": {
+        "main": [
+          [
+            {
+              "node": "\ud83d\udce7 Build HTML Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "\ud83d\udce7 Build HTML Email": {
+        "main": [
+          [
+            {
+              "node": "\ud83d\udcec Send via Gmail",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "\ud83d\udcec Send via Gmail": {
+        "main": [
+          [
+            {
+              "node": "\u2705 Respond 200",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "saveManualExecutions": true
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": null,
+    "versionId": "ea56aa4a-f5bd-489e-9ff2-159834ec886b",
+    "activeVersionId": "ea56aa4a-f5bd-489e-9ff2-159834ec886b",
+    "versionCounter": 4,
+    "triggerCount": 1,
+    "shared": [
+      {
+        "updatedAt": "2026-05-14T09:02:21.001Z",
+        "createdAt": "2026-05-14T09:02:21.001Z",
+        "role": "workflow:owner",
+        "workflowId": "s3ZikB24vTM4g21D",
+        "projectId": "AE5Y1iykB4eQDxuT",
+        "project": {
+          "updatedAt": "2026-05-14T05:14:26.492Z",
+          "createdAt": "2026-05-13T16:13:16.952Z",
+          "id": "AE5Y1iykB4eQDxuT",
+          "name": "arezoo mohammadzadegan <plantsmag@gmail.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      }
+    ],
+    "tags": [],
+    "parentFolder": null,
+    "activeVersion": {
+      "updatedAt": "2026-05-14T19:22:53.000Z",
+      "createdAt": "2026-05-14T09:02:21.003Z",
+      "versionId": "ea56aa4a-f5bd-489e-9ff2-159834ec886b",
+      "workflowId": "s3ZikB24vTM4g21D",
+      "nodes": [
+        {
+          "parameters": {
+            "httpMethod": "POST",
+            "path": "plantsmag-lead",
+            "responseMode": "responseNode",
+            "options": {}
+          },
+          "id": "wf4-webhook",
+          "name": "\ud83d\udce5 Lead Capture Webhook",
+          "type": "n8n-nodes-base.webhook",
+          "typeVersion": 2,
+          "position": [
+            180,
+            300
+          ],
+          "webhookId": "plantsmag-lead-v1"
+        },
+        {
+          "parameters": {
+            "jsCode": "// Validate and enrich lead data\nconst body = $input.item.json.body || $input.item.json;\n\nconst email = String(body.email || '').trim().toLowerCase();\nif (!email || !email.includes('@')) {\n  throw new Error('Invalid email: ' + email);\n}\n\n// Affiliate product DB\nconst PRODUCTS = {\n  'fungal':     { name: 'Bonide Copper Fungicide',    asin: 'B00BS3NT4Q', price: '$14.99', icon: '\ud83c\udf44' },\n  'spider mite':{ name: 'Neem Oil Spray',             asin: 'B07M7KPPPN', price: '$12.99', icon: '\ud83d\udd77\ufe0f' },\n  'root rot':   { name: 'Hydrogen Peroxide 3%',       asin: 'B00ILNHA6G', price: '$9.99',  icon: '\ud83d\udc8a' },\n  'overwater':  { name: 'XLUX Soil Moisture Meter',   asin: 'B07KBKXZL1', price: '$11.99', icon: '\ud83d\udce1' },\n  'nutrient':   { name: 'Miracle-Gro Liquid Fertilizer', asin: 'B00BIO560G', price: '$13.49', icon: '\ud83e\uddea' },\n  'scale':      { name: 'Insecticidal Soap Spray',   asin: 'B00B4VE6H8', price: '$8.99',  icon: '\ud83e\udeb2' },\n  'powdery':    { name: 'Garden Safe Fungicide',      asin: 'B0001YVDE0', price: '$10.99', icon: '\u2b1c' },\n};\n\nconst WATERING_PRODUCTS = {\n  succulent:  { name: 'XLUX Soil Moisture Meter', asin: 'B07KBKXZL1', price: '$11.99', icon: '\ud83d\udce1' },\n  tropical:   { name: 'LEVOIT Humidifier',        asin: 'B08L73ZT3N', price: '$79.99', icon: '\ud83d\udca8' },\n  fern:       { name: 'LEVOIT Humidifier',        asin: 'B08L73ZT3N', price: '$79.99', icon: '\ud83d\udca8' },\n  default:    { name: 'LECHUZA Self-Watering Pot', asin: 'B07N1CLX3J', price: '$89.00', icon: '\ud83c\udffa' },\n};\n\nconst leadType    = body.lead_type  || 'disease';\nconst diseaseName = body.disease_name || '';\nconst plantName   = body.plant_name   || 'your plant';\nconst severity    = body.severity     || 'medium';\nconst explanation = body.explanation  || '';\nconst waterDays   = body.watering_days || null;\n\n// Find primary product\nlet primaryProduct = { name: 'Spider Farmer Grow Light', asin: 'B07RHB8P5C', price: '$109', icon: '\ud83d\udca1' };\nif (leadType === 'disease') {\n  for (const [key, p] of Object.entries(PRODUCTS)) {\n    if (diseaseName.toLowerCase().includes(key)) { primaryProduct = p; break; }\n  }\n} else {\n  const plantKey = (body.plant_name || '').toLowerCase();\n  primaryProduct = WATERING_PRODUCTS[plantKey] || WATERING_PRODUCTS.default;\n}\n\nconst MOISTURE = { name: 'XLUX Soil Moisture Meter', asin: 'B07KBKXZL1', price: '$11.99', icon: '\ud83d\udce1' };\n\n// Severity color\nconst severityColor = { low: '#22c55e', medium: '#f59e0b', high: '#ef4444', critical: '#7c3aed' };\nconst sColor = severityColor[severity] || '#f59e0b';\n\nreturn {\n  email,\n  leadType,\n  diseaseName,\n  plantName,\n  severity,\n  explanation,\n  waterDays,\n  primaryProduct,\n  moistureProduct: MOISTURE,\n  severityColor:   sColor,\n  amzTag:    'plantsmag-20',\n  amzTagAE:  'plantsmag-ae-21',\n};"
+          },
+          "id": "wf4-enrich",
+          "name": "\u2699\ufe0f Enrich Lead Data",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            440,
+            300
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            "sendQuery": true,
+            "queryParameters": {
+              "parameters": [
+                {
+                  "name": "key",
+                  "value": "REDACTED_API_KEY"
+                }
+              ]
+            },
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            },
+            "sendBody": true,
+            "contentType": "raw",
+            "rawContentType": "application/json",
+            "body": "={\"contents\":[{\"parts\":[{\"text\":\"You are a friendly plant care expert writing a personalized email for a plant parent.\\n\\nThey used the PlantsMag {{ $json.leadType === 'disease' ? 'AI Disease Finder' : 'Watering Calculator' }} tool.\\n{{ $json.leadType === 'disease' ? 'Their plant was diagnosed with: ' + $json.diseaseName + ' (severity: ' + $json.severity + ')' : 'Their plant (' + $json.plantName + ') needs watering every ' + $json.waterDays + ' days.' }}\\n\\nWrite a warm, expert, 150-word personalized email body (NO subject line, NO greeting - just the body content). Include:\\n1. Acknowledge their specific problem\\n2. Give 1 urgent action step for TODAY\\n3. Give a 7-day mini-recovery plan (bullet points)\\n4. One expert tip they won't find elsewhere\\n\\nTone: warm friend who's a plant expert. No fluff.\"}]}],\"generationConfig\":{\"temperature\":0.7,\"maxOutputTokens\":512}}"
+          },
+          "id": "wf4-gemini",
+          "name": "\ud83e\udd16 Gemini: Personalized Email",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            700,
+            300
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "const lead = $('\u2699\ufe0f Enrich Lead Data').item.json;\nconst geminiResp = $input.item.json;\n\nconst emailBody = geminiResp?.candidates?.[0]?.content?.parts?.[0]?.text || 'Please check our website for detailed care instructions.';\n\n// Build HTML email\nconst p1 = lead.primaryProduct;\nconst p2 = lead.moistureProduct;\n\nconst html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>Your PlantsMag Care Plan</title>\n<style>\n  body { margin:0; padding:0; background:#0f1f0f; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }\n  .wrapper { max-width:600px; margin:0 auto; background:#1a2e1a; }\n  .header { background:linear-gradient(135deg,#16a34a,#14532d); padding:32px 40px; text-align:center; }\n  .logo { font-size:24px; font-weight:800; color:#fff; letter-spacing:-0.02em; }\n  .logo span { color:#4ade80; }\n  .hero-tag { display:inline-block; background:rgba(255,255,255,0.15); color:rgba(255,255,255,0.9); font-size:12px; font-weight:600; padding:4px 12px; border-radius:100px; margin-top:8px; }\n  .body { padding:36px 40px; }\n  .greeting { font-size:22px; font-weight:700; color:#fff; margin-bottom:8px; }\n  .subtext { font-size:14px; color:rgba(255,255,255,0.5); margin-bottom:24px; }\n  .diagnosis-card { background:rgba(0,0,0,0.3); border:1px solid ${lead.severityColor}40; border-left:4px solid ${lead.severityColor}; border-radius:12px; padding:16px 20px; margin-bottom:24px; }\n  .diag-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.4); margin-bottom:6px; }\n  .diag-name { font-size:18px; font-weight:700; color:${lead.severityColor}; }\n  .email-body { font-size:14px; color:rgba(255,255,255,0.75); line-height:1.8; white-space:pre-line; margin-bottom:28px; }\n  .products-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:12px; }\n  .product-row { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px; margin-bottom:10px; text-decoration:none; }\n  .prod-icon { font-size:22px; }\n  .prod-info { flex:1; }\n  .prod-name { font-size:13px; font-weight:600; color:#fff; }\n  .prod-price { font-size:12px; color:#4ade80; margin-top:2px; }\n  .prod-btn { background:#FF9900; color:#fff; padding:8px 14px; border-radius:8px; font-size:12px; font-weight:700; text-decoration:none; white-space:nowrap; }\n  .cta-section { background:linear-gradient(135deg,rgba(42,123,76,0.15),rgba(42,123,76,0.05)); border:1px solid rgba(42,123,76,0.25); border-radius:16px; padding:24px; text-align:center; margin-top:24px; }\n  .cta-text { color:rgba(255,255,255,0.6); font-size:13px; margin-bottom:14px; }\n  .cta-btn { display:inline-block; background:linear-gradient(135deg,#16a34a,#22c55e); color:#fff; padding:13px 28px; border-radius:10px; font-size:14px; font-weight:700; text-decoration:none; }\n  .footer { padding:20px 40px; border-top:1px solid rgba(255,255,255,0.06); }\n  .footer p { font-size:11px; color:rgba(255,255,255,0.25); margin:0; line-height:1.6; }\n  .footer a { color:rgba(255,255,255,0.35); }\n</style>\n</head>\n<body>\n<div class=\"wrapper\">\n  <div class=\"header\">\n    <div class=\"logo\">\ud83c\udf3f Plants<span>Mag</span></div>\n    <div class=\"hero-tag\">${lead.leadType === 'disease' ? '\ud83d\udd2c AI Disease Diagnosis' : '\ud83d\udca7 Watering Calculator'} \u2014 Personalized Report</div>\n  </div>\n  <div class=\"body\">\n    <div class=\"greeting\">Your Plant Care Plan is Ready \ud83c\udf31</div>\n    <div class=\"subtext\">Based on your ${lead.leadType === 'disease' ? `diagnosis: <strong style=\"color:${lead.severityColor}\">${lead.diseaseName || 'Plant Condition'}</strong>` : `${lead.plantName} watering schedule (every ${lead.waterDays} days)`}</div>\n    \n    ${lead.leadType === 'disease' ? `\n    <div class=\"diagnosis-card\">\n      <div class=\"diag-label\">Diagnosed Condition</div>\n      <div class=\"diag-name\">${lead.diseaseName || 'Unknown Condition'}</div>\n      ${lead.explanation ? `<p style=\"font-size:12px;color:rgba(255,255,255,0.5);margin:6px 0 0;\">${lead.explanation.slice(0, 120)}...</p>` : ''}\n    </div>` : `\n    <div class=\"diagnosis-card\">\n      <div class=\"diag-label\">Your Watering Schedule</div>\n      <div class=\"diag-name\">Every ${lead.waterDays} days \ud83d\udca7</div>\n      <p style=\"font-size:12px;color:rgba(255,255,255,0.5);margin:6px 0 0;\">Based on your ${lead.plantName}, pot type, temperature, and light conditions.</p>\n    </div>`}\n\n    <div class=\"email-body\">${emailBody}</div>\n\n    <div class=\"products-title\">\ud83d\uded2 Expert-Recommended Products</div>\n    \n    <a href=\"https://www.amazon.com/dp/${p1.asin}?tag=${lead.amzTag}\" class=\"product-row\" target=\"_blank\">\n      <span class=\"prod-icon\">${p1.icon}</span>\n      <div class=\"prod-info\">\n        <div class=\"prod-name\">${p1.name}</div>\n        <div class=\"prod-price\">${p1.price} \u2014 Amazon US</div>\n      </div>\n      <a href=\"https://www.amazon.com/dp/${p1.asin}?tag=${lead.amzTag}\" class=\"prod-btn\" target=\"_blank\">Buy \u2192</a>\n    </a>\n    \n    <a href=\"https://www.amazon.com/dp/${p2.asin}?tag=${lead.amzTag}\" class=\"product-row\" target=\"_blank\">\n      <span class=\"prod-icon\">${p2.icon}</span>\n      <div class=\"prod-info\">\n        <div class=\"prod-name\">${p2.name}</div>\n        <div class=\"prod-price\">${p2.price} \u2014 Amazon US</div>\n      </div>\n      <a href=\"https://www.amazon.com/dp/${p2.asin}?tag=${lead.amzTag}\" class=\"prod-btn\" target=\"_blank\">Buy \u2192</a>\n    </a>\n\n    <div class=\"cta-section\">\n      <p class=\"cta-text\">Need a second opinion? Use our free AI tools anytime.</p>\n      <a href=\"https://plantsmag.com/plant-disease-finder/\" class=\"cta-btn\">\ud83c\udf3f Back to PlantsMag</a>\n    </div>\n  </div>\n  <div class=\"footer\">\n    <p>You received this because you used a PlantsMag free tool. <a href=\"https://plantsmag.com\">Unsubscribe</a> | PlantsMag.com \u2014 The Plant Parent's Guide</p>\n    <p style=\"margin-top:6px;\">As an Amazon Associate we earn from qualifying purchases.</p>\n  </div>\n</div>\n</body>\n</html>`;\n\nreturn {\n  to:      lead.email,\n  subject: lead.leadType === 'disease'\n    ? `Your ${lead.diseaseName || 'Plant'} Treatment Plan \u2014 PlantsMag \ud83c\udf3f`\n    : `Your ${lead.plantName} Watering Schedule \u2014 PlantsMag \ud83d\udca7`,\n  html,\n  leadSummary: `${lead.leadType} | ${lead.diseaseName || lead.plantName} | ${lead.email}`\n};"
+          },
+          "id": "wf4-build",
+          "name": "\ud83d\udce7 Build HTML Email",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            960,
+            300
+          ]
+        },
+        {
+          "parameters": {
+            "sendTo": "={{ $json.to }}",
+            "subject": "={{ $json.subject }}",
+            "emailType": "html",
+            "message": "={{ $json.html }}",
+            "options": {
+              "appendAttribution": false
+            }
+          },
+          "id": "wf4-gmail",
+          "name": "\ud83d\udcec Send via Gmail",
+          "type": "n8n-nodes-base.gmail",
+          "typeVersion": 2.1,
+          "position": [
+            1220,
+            300
+          ],
+          "credentials": {
+            "gmailOAuth2": {
+              "id": "gmail-plantsmag",
+              "name": "PlantsMag Gmail"
+            }
+          }
+        },
+        {
+          "parameters": {
+            "respondWith": "json",
+            "responseBody": "={\"success\": true, \"message\": \"Lead captured. Email sent to \" + $('\u2699\ufe0f Enrich Lead Data').item.json.email}"
+          },
+          "id": "wf4-respond",
+          "name": "\u2705 Respond 200",
+          "type": "n8n-nodes-base.respondToWebhook",
+          "typeVersion": 1.1,
+          "position": [
+            1480,
+            300
+          ]
+        }
+      ],
+      "connections": {
+        "\ud83d\udce5 Lead Capture Webhook": {
+          "main": [
+            [
+              {
+                "node": "\u2699\ufe0f Enrich Lead Data",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "\u2699\ufe0f Enrich Lead Data": {
+          "main": [
+            [
+              {
+                "node": "\ud83e\udd16 Gemini: Personalized Email",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "\ud83e\udd16 Gemini: Personalized Email": {
+          "main": [
+            [
+              {
+                "node": "\ud83d\udce7 Build HTML Email",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "\ud83d\udce7 Build HTML Email": {
+          "main": [
+            [
+              {
+                "node": "\ud83d\udcec Send via Gmail",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "\ud83d\udcec Send via Gmail": {
+          "main": [
+            [
+              {
+                "node": "\u2705 Respond 200",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        }
+      },
+      "authors": "arezoo mohammadzadegan",
+      "name": "Version ea56aa4a",
+      "description": "",
+      "autosaved": false,
+      "workflowPublishHistory": [
+        {
+          "createdAt": "2026-05-14T19:22:53.876Z",
+          "id": 5,
+          "workflowId": "s3ZikB24vTM4g21D",
+          "versionId": "ea56aa4a-f5bd-489e-9ff2-159834ec886b",
+          "event": "activated",
+          "userId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      ]
+    },
+    "scopes": [
+      "workflow:create",
+      "workflow:delete",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:update"
+    ],
+    "checksum": "14f700ea745060f9187f64a089c1925c0d644f2978572d50d7c4dc3e7167faf2"
+  },
+  {
+    "updatedAt": "2026-05-14T19:38:19.614Z",
+    "createdAt": "2026-05-14T18:49:38.013Z",
+    "id": "tO5c9kwx4qtJNKqm",
+    "name": "WF9 - Bulk Publisher",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "2951d08e-e915-49f8-b30e-8b88ae13bbef",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          0,
+          0
+        ],
+        "id": "4740e67c-bf43-45c4-abcd-aa95dc0230cc",
+        "name": "Webhook",
+        "webhookId": "2951d08e-e915-49f8-b30e-8b88ae13bbef"
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $input.first().json.body;\\nconst keywords = body.keywords;\\nconst funnel_stage = body.funnel_stage || 'TOFU';\\nconst related_expo = body.related_expo || '';\\nreturn keywords.map(k => ({ json: { keyword: k, funnel_stage, related_expo } }));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          208,
+          0
+        ],
+        "id": "345bb28a-9747-43b0-b99d-ab8460901976",
+        "name": "Split Keywords"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "QU364lwR6Urll9N2",
+            "mode": "id",
+            "cachedResultUrl": "/workflow/QU364lwR6Urll9N2"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          416,
+          0
+        ],
+        "id": "961fbac8-b323-45da-90f4-0df54d54fba3",
+        "name": "Call Content Factory"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Split Keywords",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Keywords": {
+        "main": [
+          [
+            {
+              "node": "Call Content Factory",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": false
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "06640c41-f06b-4cb6-829e-f675f830032f",
+    "activeVersionId": "06640c41-f06b-4cb6-829e-f675f830032f",
+    "versionCounter": 26,
+    "triggerCount": 1,
+    "shared": [
+      {
+        "updatedAt": "2026-05-14T18:49:38.015Z",
+        "createdAt": "2026-05-14T18:49:38.015Z",
+        "role": "workflow:owner",
+        "workflowId": "tO5c9kwx4qtJNKqm",
+        "projectId": "AE5Y1iykB4eQDxuT",
+        "project": {
+          "updatedAt": "2026-05-14T05:14:26.492Z",
+          "createdAt": "2026-05-13T16:13:16.952Z",
+          "id": "AE5Y1iykB4eQDxuT",
+          "name": "arezoo mohammadzadegan <plantsmag@gmail.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      }
+    ],
+    "tags": [],
+    "parentFolder": null,
+    "activeVersion": {
+      "updatedAt": "2026-05-14T19:44:53.000Z",
+      "createdAt": "2026-05-14T19:38:19.619Z",
+      "versionId": "06640c41-f06b-4cb6-829e-f675f830032f",
+      "workflowId": "tO5c9kwx4qtJNKqm",
+      "nodes": [
+        {
+          "parameters": {
+            "httpMethod": "POST",
+            "path": "2951d08e-e915-49f8-b30e-8b88ae13bbef",
+            "options": {}
+          },
+          "type": "n8n-nodes-base.webhook",
+          "typeVersion": 2.1,
+          "position": [
+            0,
+            0
+          ],
+          "id": "4740e67c-bf43-45c4-abcd-aa95dc0230cc",
+          "name": "Webhook",
+          "webhookId": "2951d08e-e915-49f8-b30e-8b88ae13bbef"
+        },
+        {
+          "parameters": {
+            "jsCode": "const body = $input.first().json.body;\\nconst keywords = body.keywords;\\nconst funnel_stage = body.funnel_stage || 'TOFU';\\nconst related_expo = body.related_expo || '';\\nreturn keywords.map(k => ({ json: { keyword: k, funnel_stage, related_expo } }));"
+          },
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            208,
+            0
+          ],
+          "id": "345bb28a-9747-43b0-b99d-ab8460901976",
+          "name": "Split Keywords"
+        },
+        {
+          "parameters": {
+            "workflowId": {
+              "__rl": true,
+              "value": "QU364lwR6Urll9N2",
+              "mode": "id",
+              "cachedResultUrl": "/workflow/QU364lwR6Urll9N2"
+            },
+            "workflowInputs": {
+              "mappingMode": "defineBelow",
+              "value": {},
+              "matchingColumns": [],
+              "schema": [],
+              "attemptToConvertTypes": false,
+              "convertFieldsToString": true
+            },
+            "options": {}
+          },
+          "type": "n8n-nodes-base.executeWorkflow",
+          "typeVersion": 1.3,
+          "position": [
+            416,
+            0
+          ],
+          "id": "961fbac8-b323-45da-90f4-0df54d54fba3",
+          "name": "Call Content Factory"
+        }
+      ],
+      "connections": {
+        "Webhook": {
+          "main": [
+            [
+              {
+                "node": "Split Keywords",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Split Keywords": {
+          "main": [
+            [
+              {
+                "node": "Call Content Factory",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        }
+      },
+      "authors": "arezoo mohammadzadegan",
+      "name": "Version 06640c41",
+      "description": "",
+      "autosaved": true,
+      "workflowPublishHistory": [
+        {
+          "createdAt": "2026-05-14T19:44:53.614Z",
+          "id": 6,
+          "workflowId": "tO5c9kwx4qtJNKqm",
+          "versionId": "06640c41-f06b-4cb6-829e-f675f830032f",
+          "event": "activated",
+          "userId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      ]
+    },
+    "scopes": [
+      "workflow:create",
+      "workflow:delete",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:update"
+    ],
+    "checksum": "28e3e52d12eb4f3e50b60f1cbc1c991a633e748f29c68370e709e13b5aba3c9f"
+  },
+  {
+    "updatedAt": "2026-05-14T21:48:38.597Z",
+    "createdAt": "2026-05-14T07:09:03.784Z",
+    "id": "SLgAkWAL2NBVzZ7U",
+    "name": "WF3 \u2014 High-Ticket Funnel",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 15 */2 * *"
+              }
+            ]
+          }
+        },
+        "id": "w3a",
+        "name": "Every 2 Days",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          192,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const cats=[{cat:'LED Grow Lights',angle:'Best LED Grow Lights for Indoor Plants 2026: Expert Tested',asin:'B08B486YQK',price:'$189',name:'Spider Farmer SF-2000'},{cat:'Plant Humidifiers',angle:'Best Humidifiers for Tropical Houseplants 2026',asin:'B08L73ZT3N',price:'$79',name:'LEVOIT 6L Humidifier'},{cat:'Smart Soil Sensors',angle:'Best Smart Plant Monitors 2026: Honest Expert Review',asin:'B07KBKXZL1',price:'$29',name:'XLUX Soil Sensor'},{cat:'Self-Watering Pots',angle:'Best Self-Watering Planters for Busy Plant Parents 2026',asin:'B07N1CLX3J',price:'$89',name:'LECHUZA CUBICO'},{cat:'Indoor Greenhouses',angle:'Best Mini Indoor Greenhouses 2026: Create Your Plant Paradise',asin:'B07RV3G2PF',price:'$49',name:'Ohuhu Mini Greenhouse'}];return cats[Math.floor(Math.random()*cats.length)]"
+        },
+        "id": "w3b",
+        "name": "Select High-Ticket",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          432,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "REDACTED_API_KEY"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "{\"contents\":[{\"parts\":[{\"text\":\"Write a 2500-word high-converting product review article: {{ $json.angle }}. Feature product: {{ $json.name }} ({{ $json.price }}, ASIN {{ $json.asin }}). Structure: 1) AIDA intro (200w) hooking plant parent pain points 2) Quick comparison HTML table of top 3 {{ $json.cat }} products with ratings 3) Detailed review with pros/cons 4) Buying guide 5) FAQ (3 questions) 6) Strong CTA. Include affiliate links: US: https://www.amazon.com/dp/{{ $json.asin }}?tag=plantsmag-20 and UAE: https://www.amazon.ae/dp/{{ $json.asin }}?tag=plantsmag-ae-21. Disclosure at bottom. Return ONLY valid JSON: {title, slug, meta_description, content}\"}]}],\"generationConfig\":{\"temperature\":0.7,\"maxOutputTokens\":8192}}",
+          "options": {}
+        },
+        "id": "w3c",
+        "name": "Gemini Review",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          672,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const r=$input.item.json;let t=r?.candidates?.[0]?.content?.parts?.[0]?.text||'';t=t.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim();let a;try{a=JSON.parse(t)}catch(e){const m=t.match(/\\{[\\s\\S]*?\\}/s);if(m)try{a=JSON.parse(m[0])}catch(e2){a=null}}a=a||{title:'Plant Equipment Review '+Date.now(),slug:'plant-review-'+Date.now(),meta_description:'Expert plant equipment review',content:t||'<p>Review</p>'};return {title:String(a.title||'').slice(0,200),slug:String(a.slug||'plant-review').replace(/[^a-z0-9-]/gi,'-').slice(0,60),meta_description:String(a.meta_description||'').slice(0,155),content:String(a.content||'')}"
+        },
+        "id": "w3d",
+        "name": "Parse Review",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          912,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBasicAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "w3e",
+        "name": "Publish Review",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1152,
+          304
+        ],
+        "credentials": {
+          "httpBasicAuth": {
+            "id": "gB8bPmc1dpPDMqKb",
+            "name": "PlantsMag WP Auth"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Every 2 Days": {
+        "main": [
+          [
+            {
+              "node": "Select High-Ticket",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Select High-Ticket": {
+        "main": [
+          [
+            {
+              "node": "Gemini Review",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini Review": {
+        "main": [
+          [
+            {
+              "node": "Parse Review",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Review": {
+        "main": [
+          [
+            {
+              "node": "Publish Review",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": {
+      "node:Every 2 Days": {
+        "recurrenceRules": []
+      }
+    },
+    "meta": null,
+    "pinData": {},
+    "versionId": "67c29b0e-f6b8-4a6f-bae4-cae35f2b48ae",
+    "activeVersionId": "67c29b0e-f6b8-4a6f-bae4-cae35f2b48ae",
+    "versionCounter": 10,
+    "triggerCount": 1,
+    "shared": [
+      {
+        "updatedAt": "2026-05-14T07:09:03.786Z",
+        "createdAt": "2026-05-14T07:09:03.786Z",
+        "role": "workflow:owner",
+        "workflowId": "SLgAkWAL2NBVzZ7U",
+        "projectId": "AE5Y1iykB4eQDxuT",
+        "project": {
+          "updatedAt": "2026-05-14T05:14:26.492Z",
+          "createdAt": "2026-05-13T16:13:16.952Z",
+          "id": "AE5Y1iykB4eQDxuT",
+          "name": "arezoo mohammadzadegan <plantsmag@gmail.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      }
+    ],
+    "tags": [],
+    "parentFolder": null,
+    "activeVersion": {
+      "updatedAt": "2026-05-14T21:49:04.000Z",
+      "createdAt": "2026-05-14T21:48:38.597Z",
+      "versionId": "67c29b0e-f6b8-4a6f-bae4-cae35f2b48ae",
+      "workflowId": "SLgAkWAL2NBVzZ7U",
+      "nodes": [
+        {
+          "parameters": {
+            "rule": {
+              "interval": [
+                {
+                  "field": "cronExpression",
+                  "expression": "0 15 */2 * *"
+                }
+              ]
+            }
+          },
+          "id": "w3a",
+          "name": "Every 2 Days",
+          "type": "n8n-nodes-base.scheduleTrigger",
+          "typeVersion": 1.2,
+          "position": [
+            192,
+            304
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "const cats=[{cat:'LED Grow Lights',angle:'Best LED Grow Lights for Indoor Plants 2026: Expert Tested',asin:'B08B486YQK',price:'$189',name:'Spider Farmer SF-2000'},{cat:'Plant Humidifiers',angle:'Best Humidifiers for Tropical Houseplants 2026',asin:'B08L73ZT3N',price:'$79',name:'LEVOIT 6L Humidifier'},{cat:'Smart Soil Sensors',angle:'Best Smart Plant Monitors 2026: Honest Expert Review',asin:'B07KBKXZL1',price:'$29',name:'XLUX Soil Sensor'},{cat:'Self-Watering Pots',angle:'Best Self-Watering Planters for Busy Plant Parents 2026',asin:'B07N1CLX3J',price:'$89',name:'LECHUZA CUBICO'},{cat:'Indoor Greenhouses',angle:'Best Mini Indoor Greenhouses 2026: Create Your Plant Paradise',asin:'B07RV3G2PF',price:'$49',name:'Ohuhu Mini Greenhouse'}];return cats[Math.floor(Math.random()*cats.length)]"
+          },
+          "id": "w3b",
+          "name": "Select High-Ticket",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            432,
+            304
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            "sendQuery": true,
+            "queryParameters": {
+              "parameters": [
+                {
+                  "name": "key",
+                  "value": "REDACTED_API_KEY"
+                }
+              ]
+            },
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            },
+            "sendBody": true,
+            "contentType": "raw",
+            "rawContentType": "application/json",
+            "body": "{\"contents\":[{\"parts\":[{\"text\":\"Write a 2500-word high-converting product review article: {{ $json.angle }}. Feature product: {{ $json.name }} ({{ $json.price }}, ASIN {{ $json.asin }}). Structure: 1) AIDA intro (200w) hooking plant parent pain points 2) Quick comparison HTML table of top 3 {{ $json.cat }} products with ratings 3) Detailed review with pros/cons 4) Buying guide 5) FAQ (3 questions) 6) Strong CTA. Include affiliate links: US: https://www.amazon.com/dp/{{ $json.asin }}?tag=plantsmag-20 and UAE: https://www.amazon.ae/dp/{{ $json.asin }}?tag=plantsmag-ae-21. Disclosure at bottom. Return ONLY valid JSON: {title, slug, meta_description, content}\"}]}],\"generationConfig\":{\"temperature\":0.7,\"maxOutputTokens\":8192}}",
+            "options": {}
+          },
+          "id": "w3c",
+          "name": "Gemini Review",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            672,
+            304
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "const r=$input.item.json;let t=r?.candidates?.[0]?.content?.parts?.[0]?.text||'';t=t.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim();let a;try{a=JSON.parse(t)}catch(e){const m=t.match(/\\{[\\s\\S]*?\\}/s);if(m)try{a=JSON.parse(m[0])}catch(e2){a=null}}a=a||{title:'Plant Equipment Review '+Date.now(),slug:'plant-review-'+Date.now(),meta_description:'Expert plant equipment review',content:t||'<p>Review</p>'};return {title:String(a.title||'').slice(0,200),slug:String(a.slug||'plant-review').replace(/[^a-z0-9-]/gi,'-').slice(0,60),meta_description:String(a.meta_description||'').slice(0,155),content:String(a.content||'')}"
+          },
+          "id": "w3d",
+          "name": "Parse Review",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            912,
+            304
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpBasicAuth",
+            "sendBody": true,
+            "bodyParameters": {
+              "parameters": [
+                {}
+              ]
+            },
+            "options": {}
+          },
+          "id": "w3e",
+          "name": "Publish Review",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            1152,
+            304
+          ],
+          "credentials": {
+            "httpBasicAuth": {
+              "id": "gB8bPmc1dpPDMqKb",
+              "name": "PlantsMag WP Auth"
+            }
+          }
+        }
+      ],
+      "connections": {
+        "Every 2 Days": {
+          "main": [
+            [
+              {
+                "node": "Select High-Ticket",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Select High-Ticket": {
+          "main": [
+            [
+              {
+                "node": "Gemini Review",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Gemini Review": {
+          "main": [
+            [
+              {
+                "node": "Parse Review",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Parse Review": {
+          "main": [
+            [
+              {
+                "node": "Publish Review",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        }
+      },
+      "authors": "arezoo mohammadzadegan",
+      "name": "Version 67c29b0e",
+      "description": "",
+      "autosaved": true,
+      "workflowPublishHistory": [
+        {
+          "createdAt": "2026-05-14T21:49:04.067Z",
+          "id": 12,
+          "workflowId": "SLgAkWAL2NBVzZ7U",
+          "versionId": "67c29b0e-f6b8-4a6f-bae4-cae35f2b48ae",
+          "event": "activated",
+          "userId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      ]
+    },
+    "scopes": [
+      "workflow:create",
+      "workflow:delete",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:update"
+    ],
+    "checksum": "74183f3416de9b2a4666f80305b91bd5d9373e5b09d6328968fdf30d4126606d"
+  },
+  {
+    "updatedAt": "2026-05-14T21:49:05.626Z",
+    "createdAt": "2026-05-14T18:37:22.521Z",
+    "id": "QU364lwR6Urll9N2",
+    "name": "WF6 - Content Factory",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "DELETE",
+          "path": "seo-content-factory",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          0,
+          0
+        ],
+        "id": "b69c0615-fa83-4d6b-b91a-b1b0eac7c784",
+        "name": "Webhook",
+        "webhookId": "1f51b655-306b-4b9b-a1a3-dd8c525ea789"
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "mode": "list",
+            "value": ""
+          },
+          "messages": {
+            "values": [
+              {
+                "content": "Write a 1500 word SEO article in Persian (Farsi) for Iranian business owners in Dubai.\n\nKeyword: {{ $json.body.keyword }}\nFunnel: {{ $json.body.funnel_stage }}\n\nRules:\n- Write 4-5 H2 sections\n- Use real market statistics\n- End with a CTA block linking to https://iran2dubai.com/seo\n- Output in HTML format (h2, p, ul, li tags)"
+              }
+            ]
+          },
+          "builtInTools": {},
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.googleGemini",
+        "typeVersion": 1.1,
+        "position": [
+          208,
+          0
+        ],
+        "id": "99e46b32-77b0-4beb-bca5-d119d8e9de26",
+        "name": "Gemini - Write Article",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "snhmLm7CcjRQvFJn",
+            "name": "Iran2Dubai Gemini"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const content = $input.first().json.response || '';\nconst kw = $node['Webhook - Receive Keyword'].json.body.keyword || 'dubai-trade';\nconst slug = kw.toLowerCase().replace(/[^a-z0-9\\s]/g,'').replace(/\\s+/g,'-').substring(0,50) + '-' + Date.now();\nreturn [{json:{title: kw, slug: slug, content: content, status: 'publish'}}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          560,
+          0
+        ],
+        "id": "b47e2135-6d23-4419-b8ad-5f5b03740921",
+        "name": "Build Payload"
+      },
+      {
+        "parameters": {
+          "title": "={{ $json.title}} ",
+          "additionalFields": {
+            "content": "={{ $json.content}} ",
+            "slug": "={{ $json.slug}} ",
+            "status": "publish"
+          }
+        },
+        "type": "n8n-nodes-base.wordpress",
+        "typeVersion": 1,
+        "position": [
+          768,
+          0
+        ],
+        "id": "2fffe391-3036-4126-acb5-7d30ec138e87",
+        "name": "Publish to WordPress",
+        "credentials": {
+          "wordpressApi": {
+            "id": "EmBOmAYjYfejE6QP",
+            "name": "Iran2Dubai WP API"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Gemini - Write Article",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini - Write Article": {
+        "main": [
+          [
+            {
+              "node": "Build Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Payload": {
+        "main": [
+          [
+            {
+              "node": "Publish to WordPress",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": false
+    },
+    "staticData": null,
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "pinData": {},
+    "versionId": "31366f8d-d3a2-4019-9702-212e10d113f2",
+    "activeVersionId": "e2f1aa6b-6f08-4756-acfa-518d0f33ad7a",
+    "versionCounter": 222,
+    "triggerCount": 1,
+    "shared": [
+      {
+        "updatedAt": "2026-05-14T18:37:22.522Z",
+        "createdAt": "2026-05-14T18:37:22.522Z",
+        "role": "workflow:owner",
+        "workflowId": "QU364lwR6Urll9N2",
+        "projectId": "AE5Y1iykB4eQDxuT",
+        "project": {
+          "updatedAt": "2026-05-14T05:14:26.492Z",
+          "createdAt": "2026-05-13T16:13:16.952Z",
+          "id": "AE5Y1iykB4eQDxuT",
+          "name": "arezoo mohammadzadegan <plantsmag@gmail.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      }
+    ],
+    "tags": [],
+    "parentFolder": null,
+    "activeVersion": {
+      "updatedAt": "2026-05-14T18:48:28.000Z",
+      "createdAt": "2026-05-14T18:47:59.349Z",
+      "versionId": "e2f1aa6b-6f08-4756-acfa-518d0f33ad7a",
+      "workflowId": "QU364lwR6Urll9N2",
+      "nodes": [
+        {
+          "parameters": {
+            "httpMethod": "POST",
+            "path": "seo-content-factory",
+            "options": {}
+          },
+          "type": "n8n-nodes-base.webhook",
+          "typeVersion": 2.1,
+          "position": [
+            0,
+            0
+          ],
+          "id": "88488a12-2f69-4926-930f-987defebeeb2",
+          "name": "Webhook",
+          "webhookId": "32fe224d-36dc-4534-9eb8-7a05ac41e937"
+        },
+        {
+          "parameters": {
+            "modelId": {
+              "__rl": true,
+              "value": "=gemini-1.5-pro\n",
+              "mode": "id"
+            },
+            "messages": {
+              "values": [
+                {
+                  "content": "=You are a professional SEO strategist for the Dubai market.\\nDesign a complete content architecture for the following keyword:\\nKeyword: {{  $json.body.keyword }}\\nFunnel Stage: {{  $json.body.funnel_stage }}\\nSearch Intent: {{  $json.body.intent }}\\nContent Angle: {{  $json.body.content_angle }}\\nRelated Expo: {{  $json.body.related_expo }}\\n\\nThe output MUST be exactly this JSON (values in Persian where specified):\\n{\\n  \"title\": \"Article title in Persian (SEO-Optimized)\",\\n  \"title_en\": \"English title for URL slug\",\\n  \"meta_description\": \"Persian meta description 155 chars\",\\n  \"h1\": \"Main H1 header in Persian\",\\n  \"h2_sections\": [\"Section 1: ...\",\"Section 2: ...\",\"Section 3: ...\",\"Section 4: ...\",\"Section 5: Conclusion and CTA\"],\\n  \"cta_text\": \"CTA button text in Persian\",\\n  \"cta_link\": \"/seo\",\\n  \"lsi_keywords\": [\"LSI 1\", \"LSI 2\", \"LSI 3\"],\\n  \"word_count_target\": 1800\\n} }} }} }} }} }}",
+                  "role": {}
+                }
+              ]
+            },
+            "builtInTools": {},
+            "options": {}
+          },
+          "type": "@n8n/n8n-nodes-langchain.googleGemini",
+          "typeVersion": 1.1,
+          "position": [
+            208,
+            0
+          ],
+          "id": "cb72cfd3-a414-4775-9f8d-dd64f34e27c3",
+          "name": "Gemini - SEO Strategy & Structure",
+          "credentials": {
+            "googlePalmApi": {
+              "id": "snhmLm7CcjRQvFJn",
+              "name": "Iran2Dubai Gemini"
+            }
+          }
+        },
+        {
+          "parameters": {
+            "jsCode": "const raw = $input.first().json.response || '';\nlet structure = {};\ntry {\n    const match = raw.match(/\\{([\\s\\S]*?)\\}(?=[^}]*$)/);\n    structure = JSON.parse('{' + match[1] + '}');\n} catch(e) {\n    structure = {title:'Dubai Market 2027',title_en:'dubai-market-2027',meta_description:'Dubai Business Guide',h1:'Dubai Guide',h2_sections:['Intro','Opportunities','Tools','Summary'],cta_text:'Free Consult',cta_link:'/#lead-magnet',lsi_keywords:['Dubai','Business','Iran'],word_count_target:1800};\n}\nconst incoming = $node['Webhook'].json.body;\nreturn [{ json: { ...structure, original_keyword: incoming.keyword, funnel_stage: incoming.funnel_stage, related_expo: incoming.related_expo } }];\n}\n}"
+          },
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            560,
+            0
+          ],
+          "id": "90f3b75f-cfaf-4acc-a69e-eb0949797715",
+          "name": "Parse SEO Structure"
+        },
+        {
+          "parameters": {
+            "modelId": {
+              "__rl": true,
+              "value": "=gemini-1.5-pro",
+              "mode": "id"
+            },
+            "messages": {
+              "values": [
+                {}
+              ]
+            },
+            "builtInTools": {},
+            "options": {}
+          },
+          "type": "@n8n/n8n-nodes-langchain.googleGemini",
+          "typeVersion": 1.1,
+          "position": [
+            704,
+            0
+          ],
+          "id": "f314fcb2-46c5-4695-b281-318b82b1f42f",
+          "name": "Gemini - Write Full Article",
+          "credentials": {
+            "googlePalmApi": {
+              "id": "snhmLm7CcjRQvFJn",
+              "name": "Iran2Dubai Gemini"
+            }
+          }
+        },
+        {
+          "parameters": {
+            "title": "={{  $node[\"Parse SEO Structure\"].json[\"title\"] }} }}",
+            "additionalFields": {}
+          },
+          "type": "n8n-nodes-base.wordpress",
+          "typeVersion": 1,
+          "position": [
+            1056,
+            0
+          ],
+          "id": "a8c37d4d-757e-40c9-8061-2c08d84d8c67",
+          "name": "Publish to WordPress",
+          "credentials": {
+            "wordpressApi": {
+              "id": "EmBOmAYjYfejE6QP",
+              "name": "Iran2Dubai WP API"
+            }
+          }
+        }
+      ],
+      "connections": {
+        "Webhook": {
+          "main": [
+            [
+              {
+                "node": "Gemini - SEO Strategy & Structure",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Gemini - SEO Strategy & Structure": {
+          "main": [
+            [
+              {
+                "node": "Parse SEO Structure",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Parse SEO Structure": {
+          "main": [
+            [
+              {
+                "node": "Gemini - Write Full Article",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Gemini - Write Full Article": {
+          "main": [
+            [
+              {
+                "node": "Publish to WordPress",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        }
+      },
+      "authors": "arezoo mohammadzadegan",
+      "name": "Version e2f1aa6b",
+      "description": "",
+      "autosaved": true,
+      "workflowPublishHistory": [
+        {
+          "createdAt": "2026-05-14T18:48:28.241Z",
+          "id": 4,
+          "workflowId": "QU364lwR6Urll9N2",
+          "versionId": "e2f1aa6b-6f08-4756-acfa-518d0f33ad7a",
+          "event": "activated",
+          "userId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      ]
+    },
+    "scopes": [
+      "workflow:create",
+      "workflow:delete",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:update"
+    ],
+    "checksum": "c74cd25177b7c6cb84f8645b86629595e5a20365fe36c621ba802dd3ea6e4b0f"
+  },
+  {
+    "updatedAt": "2026-05-15T04:58:10.178Z",
+    "createdAt": "2026-05-14T05:41:16.754Z",
+    "id": "CpyU2cf01DdtpfWo",
+    "name": "WF1 - US Trend Jacker",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 13 * * *"
+              }
+            ]
+          }
+        },
+        "id": "a4e0e72f-ab16-4e31-b8c1-3e0e44d91a24",
+        "name": "Daily 8AM EST",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          512,
+          -160
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return {selectedTopic: ['Spider mites on houseplants','Monstera yellowing leaves','Root rot rescue guide','Best soil for tropical plants','Orchid care mistakes'][Math.floor(Math.random()*5)]}"
+        },
+        "id": "c60dc719-a17f-44c8-ab96-e0429f72dadf",
+        "name": "Select Topic",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          736,
+          -160
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "REDACTED_API_KEY"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={\"contents\":[{\"parts\":[{\"text\":\"Write a 2500-word SEO article about: {{ $json.selectedTopic }}. Target US plant enthusiasts. Include H2 sections, practical advice, and naturally mention Amazon products like moisture meters. Return JSON: {title, slug, meta_description, content}\"}]}],\"generationConfig\":{\"temperature\":0.8,\"maxOutputTokens\":8192}}",
+          "options": {}
+        },
+        "id": "042b4de7-4421-4295-a94d-131bff1cbe73",
+        "name": "Gemini 2.5 Write",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          976,
+          -160
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const r=$input.item.json;let t=r?.candidates?.[0]?.content?.parts?.[0]?.text||'';t=t.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim();let a;try{a=JSON.parse(t)}catch(e){a={title:'Plant Care Guide',slug:'plant-care-guide',meta_description:'Expert plant care advice',content:t}}return {title:a.title||'Plant Guide',slug:(a.slug||'plant-guide').slice(0,60),meta_description:a.meta_description||'',content:a.content||t}"
+        },
+        "id": "1dbaf170-8243-43b8-bd31-b8b56e717ccf",
+        "name": "Parse Article",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1216,
+          -160
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBasicAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "title"
+              },
+              {
+                "name": "slug",
+                "value": "{{ $json.slug }}"
+              },
+              {
+                "name": "content",
+                "value": "{{$json.content}}"
+              },
+              {
+                "name": "excerpt",
+                "value": "{{$json.meta_description}}"
+              },
+              {
+                "name": "status",
+                "value": "publish"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "19ef8406-9849-495b-9244-cbe18d0b2f2f",
+        "name": "Publish to WordPress",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1456,
+          -160
+        ],
+        "credentials": {
+          "httpBasicAuth": {
+            "id": "gB8bPmc1dpPDMqKb",
+            "name": "PlantsMag WP Auth"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Daily 8AM EST": {
+        "main": [
+          [
+            {
+              "node": "Select Topic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Select Topic": {
+        "main": [
+          [
+            {
+              "node": "Gemini 2.5 Write",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini 2.5 Write": {
+        "main": [
+          [
+            {
+              "node": "Parse Article",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Article": {
+        "main": [
+          [
+            {
+              "node": "Publish to WordPress",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": false
+    },
+    "staticData": {
+      "node:Daily 8AM EST": {
+        "recurrenceRules": []
+      }
+    },
+    "meta": null,
+    "pinData": {
+      "Daily 8AM EST": [
+        {
+          "json": {
+            "timestamp": "2026-05-15T01:57:12.597+03:30",
+            "Readable date": "May 15th 2026, 1:57:12 am",
+            "Readable time": "1:57:12 am",
+            "Day of week": "Friday",
+            "Year": "2026",
+            "Month": "May",
+            "Day of month": "15",
+            "Hour": "01",
+            "Minute": "57",
+            "Second": "12",
+            "Timezone": "Asia/Tehran (UTC+03:30)"
+          },
+          "pairedItem": {
+            "item": 0
+          }
+        }
+      ]
+    },
+    "versionId": "c1444f9f-73e6-4d02-9a67-8f423b286304",
+    "activeVersionId": "c1444f9f-73e6-4d02-9a67-8f423b286304",
+    "versionCounter": 120,
+    "triggerCount": 1,
+    "shared": [
+      {
+        "updatedAt": "2026-05-14T05:41:16.757Z",
+        "createdAt": "2026-05-14T05:41:16.757Z",
+        "role": "workflow:owner",
+        "workflowId": "CpyU2cf01DdtpfWo",
+        "projectId": "AE5Y1iykB4eQDxuT",
+        "project": {
+          "updatedAt": "2026-05-14T05:14:26.492Z",
+          "createdAt": "2026-05-13T16:13:16.952Z",
+          "id": "AE5Y1iykB4eQDxuT",
+          "name": "arezoo mohammadzadegan <plantsmag@gmail.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      }
+    ],
+    "tags": [],
+    "parentFolder": null,
+    "activeVersion": {
+      "updatedAt": "2026-05-15T04:59:12.000Z",
+      "createdAt": "2026-05-15T04:58:10.178Z",
+      "versionId": "c1444f9f-73e6-4d02-9a67-8f423b286304",
+      "workflowId": "CpyU2cf01DdtpfWo",
+      "nodes": [
+        {
+          "parameters": {
+            "rule": {
+              "interval": [
+                {
+                  "field": "cronExpression",
+                  "expression": "0 13 * * *"
+                }
+              ]
+            }
+          },
+          "id": "a4e0e72f-ab16-4e31-b8c1-3e0e44d91a24",
+          "name": "Daily 8AM EST",
+          "type": "n8n-nodes-base.scheduleTrigger",
+          "typeVersion": 1.2,
+          "position": [
+            512,
+            -160
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "return {selectedTopic: ['Spider mites on houseplants','Monstera yellowing leaves','Root rot rescue guide','Best soil for tropical plants','Orchid care mistakes'][Math.floor(Math.random()*5)]}"
+          },
+          "id": "c60dc719-a17f-44c8-ab96-e0429f72dadf",
+          "name": "Select Topic",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            736,
+            -160
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            "sendQuery": true,
+            "queryParameters": {
+              "parameters": [
+                {
+                  "name": "key",
+                  "value": "REDACTED_API_KEY"
+                }
+              ]
+            },
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            },
+            "sendBody": true,
+            "contentType": "raw",
+            "rawContentType": "application/json",
+            "body": "={\"contents\":[{\"parts\":[{\"text\":\"Write a 2500-word SEO article about: {{ $json.selectedTopic }}. Target US plant enthusiasts. Include H2 sections, practical advice, and naturally mention Amazon products like moisture meters. Return JSON: {title, slug, meta_description, content}\"}]}],\"generationConfig\":{\"temperature\":0.8,\"maxOutputTokens\":8192}}",
+            "options": {}
+          },
+          "id": "042b4de7-4421-4295-a94d-131bff1cbe73",
+          "name": "Gemini 2.5 Write",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            976,
+            -160
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "const r=$input.item.json;let t=r?.candidates?.[0]?.content?.parts?.[0]?.text||'';t=t.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim();let a;try{a=JSON.parse(t)}catch(e){a={title:'Plant Care Guide',slug:'plant-care-guide',meta_description:'Expert plant care advice',content:t}}return {title:a.title||'Plant Guide',slug:(a.slug||'plant-guide').slice(0,60),meta_description:a.meta_description||'',content:a.content||t}"
+          },
+          "id": "1dbaf170-8243-43b8-bd31-b8b56e717ccf",
+          "name": "Parse Article",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            1216,
+            -160
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpBasicAuth",
+            "sendBody": true,
+            "bodyParameters": {
+              "parameters": [
+                {
+                  "name": "title"
+                },
+                {
+                  "name": "slug",
+                  "value": "{{ $json.slug }}"
+                },
+                {
+                  "name": "content",
+                  "value": "{{$json.content}}"
+                },
+                {
+                  "name": "excerpt",
+                  "value": "{{$json.meta_description}}"
+                },
+                {
+                  "name": "status",
+                  "value": "publish"
+                }
+              ]
+            },
+            "options": {}
+          },
+          "id": "19ef8406-9849-495b-9244-cbe18d0b2f2f",
+          "name": "Publish to WordPress",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            1456,
+            -160
+          ],
+          "credentials": {
+            "httpBasicAuth": {
+              "id": "gB8bPmc1dpPDMqKb",
+              "name": "PlantsMag WP Auth"
+            }
+          }
+        }
+      ],
+      "connections": {
+        "Daily 8AM EST": {
+          "main": [
+            [
+              {
+                "node": "Select Topic",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Select Topic": {
+          "main": [
+            [
+              {
+                "node": "Gemini 2.5 Write",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Gemini 2.5 Write": {
+          "main": [
+            [
+              {
+                "node": "Parse Article",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Parse Article": {
+          "main": [
+            [
+              {
+                "node": "Publish to WordPress",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        }
+      },
+      "authors": "arezoo mohammadzadegan",
+      "name": "Version c1444f9f",
+      "description": "",
+      "autosaved": true,
+      "workflowPublishHistory": [
+        {
+          "createdAt": "2026-05-15T04:59:12.663Z",
+          "id": 16,
+          "workflowId": "CpyU2cf01DdtpfWo",
+          "versionId": "c1444f9f-73e6-4d02-9a67-8f423b286304",
+          "event": "activated",
+          "userId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      ]
+    },
+    "scopes": [
+      "workflow:create",
+      "workflow:delete",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:update"
+    ],
+    "checksum": "b3a231be972a1be240d2d940d987bcf40c81729dc7cbf4190a624ac64c1931a6"
+  },
+  {
+    "updatedAt": "2026-05-16T04:00:13.217Z",
+    "createdAt": "2026-05-14T07:09:02.172Z",
+    "id": "UKegbNpPIBkkNUrd",
+    "name": "WF2 \u2014 UAE Amazon Market",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 10 * * *"
+              }
+            ]
+          }
+        },
+        "id": "w2a",
+        "name": "14:00 GST Daily",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          192,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const topics=['Best indoor plants for UAE apartments with extreme heat','How to water plants in Dubai dry climate','Spider mite crisis in Gulf region guide','Top 10 low-maintenance plants for UAE beginners','Snake plant care in UAE: survival guide','ZZ plant care Abu Dhabi climate','Orchid care UAE humid summer tips','Monstera care Dubai apartment guide'];const products=[{name:'Organic Neem Oil Spray',asin:'B07M983S9B',price:'$18'},{name:'LEVOIT Humidifier',asin:'B08L73ZT3N',price:'$79'},{name:'Soil Moisture Meter',asin:'B07KBKXZL1',price:'$12'},{name:'Spider Farmer Grow Light',asin:'B08B486YQK',price:'$189'}];const t=topics[Math.floor(Math.random()*topics.length)];const p=products[Math.floor(Math.random()*products.length)];return {topic:t,product:p}"
+        },
+        "id": "w2b",
+        "name": "Select UAE Topic",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          432,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "key",
+                "value": "REDACTED_API_KEY"
+              }
+            ]
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={\"contents\":[{\"parts\":[{\"text\":\"Write a 2500-word SEO article for UAE/Gulf English-speaking plant enthusiasts about: {{ $json.topic }}. Feature product: {{ $json.product.name }} (ASIN {{ $json.product.asin }}, {{ $json.product.price }}) with Amazon UAE purchase link (https://www.amazon.ae/dp/{{ $json.product.asin }}?tag=plantsmag-ae-21). Include UAE climate context: extreme heat 40-50C summers, very low humidity, mostly indoor plants. Use Dubai/Abu Dhabi references. Include H2 sections, FAQ, strong CTA. Return ONLY valid JSON: {title, slug, meta_description, content}\"}]}],\"generationConfig\":{\"temperature\":0.75,\"maxOutputTokens\":8192}}",
+          "options": {}
+        },
+        "id": "w2c",
+        "name": "Gemini UAE",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          672,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const r=$input.item.json;let t=r?.candidates?.[0]?.content?.parts?.[0]?.text||'';t=t.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim();let a;try{a=JSON.parse(t)}catch(e){const m=t.match(/\\{[\\s\\S]*?\\}/s);if(m)try{a=JSON.parse(m[0])}catch(e2){a=null}}a=a||{title:'UAE Plant Guide '+Date.now(),slug:'uae-plant-guide-'+Date.now(),meta_description:'Plant care for UAE',content:t||'<p>Article</p>'};return {title:String(a.title||'').slice(0,200),slug:String(a.slug||'uae-guide').replace(/[^a-z0-9-]/gi,'-').slice(0,60),meta_description:String(a.meta_description||'').slice(0,155),content:String(a.content||'')}"
+        },
+        "id": "w2d",
+        "name": "Parse UAE Article",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          912,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBasicAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "title",
+                "value": "={{ $json.title }}"
+              },
+              {
+                "name": "slug",
+                "value": "={{ $json.slug }}"
+              },
+              {
+                "name": "content",
+                "value": "={{ $json.content }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "w2e",
+        "name": "Publish UAE Post",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1152,
+          304
+        ],
+        "credentials": {
+          "httpBasicAuth": {
+            "id": "2Mi5Z0ayPeyLt7Uz",
+            "name": "PlantsMag WP Auth"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "14:00 GST Daily": {
+        "main": [
+          [
+            {
+              "node": "Select UAE Topic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Select UAE Topic": {
+        "main": [
+          [
+            {
+              "node": "Gemini UAE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Gemini UAE": {
+        "main": [
+          [
+            {
+              "node": "Parse UAE Article",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse UAE Article": {
+        "main": [
+          [
+            {
+              "node": "Publish UAE Post",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": {
+      "node:14:00 GST Daily": {
+        "recurrenceRules": []
+      }
+    },
+    "meta": null,
+    "pinData": {},
+    "versionId": "4b9d19df-630e-4146-94f7-d6398d833187",
+    "activeVersionId": "9a8f94a4-7ad6-4df3-b701-46810e0d9710",
+    "versionCounter": 62,
+    "triggerCount": 1,
+    "shared": [
+      {
+        "updatedAt": "2026-05-14T07:09:02.175Z",
+        "createdAt": "2026-05-14T07:09:02.175Z",
+        "role": "workflow:owner",
+        "workflowId": "UKegbNpPIBkkNUrd",
+        "projectId": "AE5Y1iykB4eQDxuT",
+        "project": {
+          "updatedAt": "2026-05-14T05:14:26.492Z",
+          "createdAt": "2026-05-13T16:13:16.952Z",
+          "id": "AE5Y1iykB4eQDxuT",
+          "name": "arezoo mohammadzadegan <plantsmag@gmail.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "creatorId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      }
+    ],
+    "tags": [],
+    "parentFolder": null,
+    "activeVersion": {
+      "updatedAt": "2026-05-14T21:44:51.000Z",
+      "createdAt": "2026-05-14T21:43:41.864Z",
+      "versionId": "9a8f94a4-7ad6-4df3-b701-46810e0d9710",
+      "workflowId": "UKegbNpPIBkkNUrd",
+      "nodes": [
+        {
+          "parameters": {
+            "rule": {
+              "interval": [
+                {
+                  "field": "cronExpression",
+                  "expression": "0 10 * * *"
+                }
+              ]
+            }
+          },
+          "id": "w2a",
+          "name": "14:00 GST Daily",
+          "type": "n8n-nodes-base.scheduleTrigger",
+          "typeVersion": 1.2,
+          "position": [
+            192,
+            304
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "const topics=['Best indoor plants for UAE apartments with extreme heat','How to water plants in Dubai dry climate','Spider mite crisis in Gulf region guide','Top 10 low-maintenance plants for UAE beginners','Snake plant care in UAE: survival guide','ZZ plant care Abu Dhabi climate','Orchid care UAE humid summer tips','Monstera care Dubai apartment guide'];const products=[{name:'Organic Neem Oil Spray',asin:'B07M983S9B',price:'$18'},{name:'LEVOIT Humidifier',asin:'B08L73ZT3N',price:'$79'},{name:'Soil Moisture Meter',asin:'B07KBKXZL1',price:'$12'},{name:'Spider Farmer Grow Light',asin:'B08B486YQK',price:'$189'}];const t=topics[Math.floor(Math.random()*topics.length)];const p=products[Math.floor(Math.random()*products.length)];return {topic:t,product:p}"
+          },
+          "id": "w2b",
+          "name": "Select UAE Topic",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            432,
+            304
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+            "sendQuery": true,
+            "queryParameters": {
+              "parameters": [
+                {
+                  "name": "key",
+                  "value": "REDACTED_API_KEY"
+                }
+              ]
+            },
+            "sendHeaders": true,
+            "headerParameters": {
+              "parameters": [
+                {
+                  "name": "Content-Type",
+                  "value": "application/json"
+                }
+              ]
+            },
+            "sendBody": true,
+            "contentType": "raw",
+            "rawContentType": "application/json",
+            "body": "{\"contents\":[{\"parts\":[{\"text\":\"Write a 2500-word SEO article for UAE/Gulf English-speaking plant enthusiasts about: {{ $json.topic }}. Feature product: {{ $json.product.name }} (ASIN {{ $json.product.asin }}, {{ $json.product.price }}) with Amazon UAE purchase link (https://www.amazon.ae/dp/{{ $json.product.asin }}?tag=plantsmag-ae-21). Include UAE climate context: extreme heat 40-50C summers, very low humidity, mostly indoor plants. Use Dubai/Abu Dhabi references. Include H2 sections, FAQ, strong CTA. Return ONLY valid JSON: {title, slug, meta_description, content}\"}]}],\"generationConfig\":{\"temperature\":0.75,\"maxOutputTokens\":8192}}",
+            "options": {}
+          },
+          "id": "w2c",
+          "name": "Gemini UAE",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            672,
+            304
+          ]
+        },
+        {
+          "parameters": {
+            "jsCode": "const r=$input.item.json;let t=r?.candidates?.[0]?.content?.parts?.[0]?.text||'';t=t.replace(/```json\\n?/g,'').replace(/```\\n?/g,'').trim();let a;try{a=JSON.parse(t)}catch(e){const m=t.match(/\\{[\\s\\S]*?\\}/s);if(m)try{a=JSON.parse(m[0])}catch(e2){a=null}}a=a||{title:'UAE Plant Guide '+Date.now(),slug:'uae-plant-guide-'+Date.now(),meta_description:'Plant care for UAE',content:t||'<p>Article</p>'};return {title:String(a.title||'').slice(0,200),slug:String(a.slug||'uae-guide').replace(/[^a-z0-9-]/gi,'-').slice(0,60),meta_description:String(a.meta_description||'').slice(0,155),content:String(a.content||'')}"
+          },
+          "id": "w2d",
+          "name": "Parse UAE Article",
+          "type": "n8n-nodes-base.code",
+          "typeVersion": 2,
+          "position": [
+            912,
+            304
+          ]
+        },
+        {
+          "parameters": {
+            "method": "POST",
+            "url": "https://plantsmag.com/wp-json/wp/v2/posts",
+            "authentication": "genericCredentialType",
+            "genericAuthType": "httpBasicAuth",
+            "sendBody": true,
+            "bodyParameters": {
+              "parameters": [
+                {}
+              ]
+            },
+            "options": {}
+          },
+          "id": "w2e",
+          "name": "Publish UAE Post",
+          "type": "n8n-nodes-base.httpRequest",
+          "typeVersion": 4.2,
+          "position": [
+            1152,
+            304
+          ],
+          "credentials": {
+            "httpBasicAuth": {
+              "id": "2Mi5Z0ayPeyLt7Uz",
+              "name": "PlantsMag WP Auth"
+            }
+          }
+        }
+      ],
+      "connections": {
+        "14:00 GST Daily": {
+          "main": [
+            [
+              {
+                "node": "Select UAE Topic",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Select UAE Topic": {
+          "main": [
+            [
+              {
+                "node": "Gemini UAE",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Gemini UAE": {
+          "main": [
+            [
+              {
+                "node": "Parse UAE Article",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        },
+        "Parse UAE Article": {
+          "main": [
+            [
+              {
+                "node": "Publish UAE Post",
+                "type": "main",
+                "index": 0
+              }
+            ]
+          ]
+        }
+      },
+      "authors": "arezoo mohammadzadegan",
+      "name": "Version 9a8f94a4",
+      "description": "",
+      "autosaved": true,
+      "workflowPublishHistory": [
+        {
+          "createdAt": "2026-05-14T21:44:51.580Z",
+          "id": 10,
+          "workflowId": "UKegbNpPIBkkNUrd",
+          "versionId": "9a8f94a4-7ad6-4df3-b701-46810e0d9710",
+          "event": "activated",
+          "userId": "e83b8c75-05f3-41de-a4b2-a6a715172676"
+        }
+      ]
+    },
+    "scopes": [
+      "workflow:create",
+      "workflow:delete",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:update"
+    ],
+    "checksum": "e6def3738a2675793b1284e30a81aa6a88a0d1bd4cefed1a6a7ca9cd0acea534"
+  }
+]
